@@ -4,8 +4,6 @@
 #include "Core.h"
 #include "Material.h"
 
-using namespace std;
-
 /**
  * @brief General class for representing objects in a scene.
  */
