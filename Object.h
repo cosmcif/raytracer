@@ -30,7 +30,7 @@ public:
    * @param ray The ray to check for intersection.
    * @return The Hit structure representing the intersection.
    */
-  virtual Hit intersect(Ray ray) = 0;
+  virtual Hit intersect(Ray & ray) = 0;
 
   /**
    * @brief Gets the material structure of the object.
@@ -46,14 +46,28 @@ public:
 
   /**
    * @brief Sets up all the transformation matrices for the object.
-   * @param matrix The matrix representing the transformation of the object in global coordinates.
+   * @param matrix The matrix representing the transformation of the object in
+   * global coordinates.
    */
   void setTransformation(glm::mat4 matrix) {
     transformationMatrix = matrix;
     inverseTransformationMatrix = glm::inverse(transformationMatrix);
     normalMatrix = glm::transpose(inverseTransformationMatrix);
   }
-};
 
+  /**
+   * @brief Converts a global ray to a local ray in the object's coordinate
+   * system.
+   * @param ray The global ray to be converted.
+   * @return The local ray in the object's coordinate system.
+   */
+  Ray toLocalRay(Ray &ray) {
+    ray.origin =
+        glm::vec3(inverseTransformationMatrix * glm::vec4(ray.origin, 1.0f));
+    ray.direction = glm::normalize(glm::vec3(inverseTransformationMatrix *
+                                             glm::vec4(ray.direction, 0.0f)));
+    return ray;
+  }
+};
 
 #endif // OBJECT_H
