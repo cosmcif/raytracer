@@ -20,20 +20,20 @@ public:
      * @brief Constructor for the sphere with a specified color.
      * @param color Color of the sphere.
      */
-    Sphere(glm::vec3 color) { this->color = color; }
+    explicit Sphere(glm::vec3 color) { this->color = color; }
 
     /**
      * @brief Constructor for the sphere with a specified material.
      * @param material Material of the sphere.
      */
-    Sphere(Material material) { this->material = material; }
+    explicit Sphere(Material material) { this->material = material; }
 
     /**
      * @brief Implementation of the intersection function.
      * @param ray The ray to check for intersection.
      * @return The Hit structure representing the intersection.
      */
-    Hit intersect(Ray &ray) {
+    Hit intersect(Ray &ray) override {
 
         Ray newRay = toLocalRay(ray);
         glm::vec3 newOrigin = newRay.origin;
@@ -43,9 +43,9 @@ public:
         float cdotc = glm::dot(c, c);
         float cdotd = glm::dot(c, newDirection);
 
-        Hit hit;
+        Hit hit{};
 
-        float D = 0;
+        double D = 0;
         if (cdotc > cdotd * cdotd) {
             D = sqrt(cdotc - cdotd * cdotd);
         }
@@ -114,8 +114,8 @@ public:
      * @param ray The ray to check for intersection.
      * @return The Hit structure representing the intersection.
      */
-    Hit intersect(Ray &ray) {
-        Hit hit;
+    Hit intersect(Ray &ray) override {
+        Hit hit{};
         hit.hit = false;
 
         float ddotN = glm::dot(ray.direction, normal);
@@ -155,9 +155,9 @@ public:
      * @brief Constructor for the cone with a specified material.
      * @param material Material of the cone.
      */
-    Cone(Material material) {
+    explicit Cone(Material material) {
         this->material = material;
-        base = new Plane(glm::vec3(0, 1, 0), glm::vec3(0, 1, 0), material);
+        base = new Plane(glm::vec3(0, 1, 0), glm::vec3(0, 1, 0), true, material);
     }
 
     /**
@@ -165,8 +165,9 @@ public:
      * @param ray The ray to check for intersection.
      * @return The Hit structure representing the intersection.
      */
-    Hit intersect(Ray &ray) {
-        Hit hit;
+    Hit intersect(Ray &ray) override {
+
+        Hit hit{};
         hit.hit = false;
         float height = 1.0;
 
