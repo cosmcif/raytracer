@@ -36,13 +36,13 @@ public:
    * @brief Gets the material structure of the object.
    * @return The Material structure describing the material of the object.
    */
-  Material getMaterial() { return material; }
+  Material getMaterial() const { return material; }
 
   /**
    * @brief Sets the material of the object.
    * @param material A structure describing the material of the object.
    */
-  void setMaterial(Material material) { this->material = material; }
+  void setMaterial(Material newMaterial) { this->material = newMaterial; }
 
   /**
    * @brief Sets up all the transformation matrices for the object.
