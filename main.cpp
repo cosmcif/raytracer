@@ -128,6 +128,9 @@ glm::vec3 toneMapping(glm::vec3 intensity) {
 /**
  Function defining the scene
  */
+/**
+ Function defining the scene
+ */
 void sceneDefinition() {
 
     Material orange_specular;
@@ -145,19 +148,28 @@ void sceneDefinition() {
     objects.push_back(new MeshLoader("./meshes/armadillo.obj",
                                      glm::vec3(0, -3, 9), true, orange_specular));
 
+    // plane in the front
+    objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, -0.1f),
+                                glm::vec3(0.0f, 0.0f, 1.0f), true, blue_copper_specular));
     // plane in the back
-    objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, 300.0f),
-                                glm::vec3(0.0f, 0.0f, -1.0f),
-                                true,
-                                blue_copper_specular));
+    objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, 30.0f),
+                                glm::vec3(0.0f, 0.0f, -1.0f), true, blue_copper_specular));
+
+    // plane on the left
+    objects.push_back(new Plane(glm::vec3(-15.0f, 12.0f, 14.995f),
+                                glm::vec3(1.0f, 0.0f, 0.0f), true, blue_copper_specular));
+    // plane on the right
+    objects.push_back(new Plane(glm::vec3(15.0f, 12.0f, 14.995f),
+                                glm::vec3(-1.0f, 0.0f, 0.0f), true, blue_copper_specular));
 
     // plane on bottom
     objects.push_back(new Plane(glm::vec3(0.0f, -3.0f, 14.995f),
-                                glm::vec3(0.0f, 1.0f, 0.0f),
-                                true,
-                                blue_copper_specular));
+                                glm::vec3(0.0f, 1.0f, 0.0f), true, blue_copper_specular));
+    // plane on top
+    objects.push_back(new Plane(glm::vec3(0.0f, 27.0f, 14.995f),
+                                glm::vec3(0.0f, -1.0f, 0.0f), true, blue_copper_specular));
 
-
+/*
     for (int x = -20; x <= 20; x += 2) {
         double z = 20 + sqrt(100 - 0.3075 * x * x);
 
@@ -185,6 +197,7 @@ void sceneDefinition() {
         c2->setTransformation(transformationMatrix2);
         objects.push_back(c2);
     }
+    */
 
     lights.push_back(
             new Light(glm::vec3(0, 26, 5), glm::vec3(130.0))); // top light
