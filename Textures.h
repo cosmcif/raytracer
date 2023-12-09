@@ -15,34 +15,13 @@ glm::vec3 rainbowTexture(glm::vec2 uv) {
   int value = int(floor(n * uv.y + 0.5 * n * uv.x)) % 3;
   switch (value) {
   case 0:
-    return glm::vec3(1.0, 0.0, 0.0); // Red
+    return {1.0, 0.0, 0.0}; // Red
   case 1:
-    return glm::vec3(0.0, 1.0, 0.0); // Green
+    return {0.0, 1.0, 0.0}; // Green
   default:
-    return glm::vec3(0.0, 0.0, 1.0); // Blue
+    return {0.0, 0.0, 1.0}; // Blue
   }
 }
-
-/* EXTRA EXTRA STUFF
- * The following code wasn't requested by the assignment, it
- * was created simply to have fun and experiment with textures.
- *
- * This section contains:
- *
- * - Color definition
- *
- * - Auxiliary functions
- *   - ellipseFormula
- *   - eyesAuxiliary
- *   - edgeEquation
- *   - triangleAuxiliary
- *   - crossAuxiliary
- *
- * - Textures
- *   - polandballTexture
- *   - donatelloTexture
- *   - calabriaTexture
- */
 
 /* COLOR DEFINITION */
 const glm::vec3 BLACK(0.0, 0.0, 0.0);
@@ -187,7 +166,7 @@ int crossAuxiliary(glm::vec2 uv) {
 
   // black cross
   float black_radius = 0.0003;
-  // hite canceling
+  // white canceling
   float white_radius = 0.0001;
 
   if (whiteLeft1 < white_radius && whiteLeft1 > 0 ||
