@@ -29,23 +29,16 @@ public:
            glm::vec3 normalC = glm::vec3(0.0f))
       : vertexA(vertexA), vertexB(vertexB), vertexC(vertexC), normalA(normalA),
         normalB(normalB), normalC(normalC),
-        // if one of these is NOT 0, then it's true
+        normal(glm::normalize(glm::cross(vertexB - vertexA, vertexC - vertexA))),
+        vertices{vertexA, vertexB, vertexC},
+          // if one of these is NOT 0, then it's true
         // what all normals are 0? is it even possible??
         vertexNormals(normalA != glm::vec3(0.0f) ||
                       normalB != glm::vec3(0.0f) ||
-                      normalC != glm::vec3(0.0f)) {
+                      normalC != glm::vec3(0.0f)) { }
 
-    glm::vec3 AB = vertexB - vertexA;
-    glm::vec3 AC = vertexC - vertexA;
-    normal = glm::normalize(glm::cross(AB, AC));
-
-    vertices[0] = vertexA;
-    vertices[1] = vertexB;
-    vertices[2] = vertexC;
-  }
-
-  Hit intersect(Ray &ray) {
-    Hit hit;
+  Hit intersect(Ray &ray) override {
+    Hit hit{};
     hit.hit = false;
 
     float ddotN = glm::dot(ray.direction, normal);
@@ -124,7 +117,7 @@ public:
   }
 
   Hit intersect(Ray &ray) override {
-    Hit hit;
+    Hit hit{};
     hit.hit = false;
 
     float tmin, tmax, ymin, ymax, zmin, zmax;
@@ -191,7 +184,7 @@ private:
   std::vector<Triangle> triangles; // Store triangles in leaf nodes
 
   std::pair<std::vector<Triangle>, std::vector<Triangle>>
-  splitMesh(std::vector<Triangle> &mesh, int a) {
+  static splitMesh(std::vector<Triangle> &mesh, int a) {
     std::vector<Triangle> left;
     std::vector<Triangle> right;
 
@@ -224,7 +217,7 @@ private:
   }
 
 public:
-  bvh_node(std::vector<Triangle> &mesh, int a = 0) {
+  explicit bvh_node(std::vector<Triangle> &mesh, int a = 0) {
     int maxSize = 20;
     boundingBox = new BoundingBox(mesh);
 
@@ -274,8 +267,8 @@ private:
   bvh_node *node;
 
 public:
-  MeshLoader(std::string filename, glm::vec3 translation, bool hasMaterial,
-             Material material) {
+  MeshLoader(const std::string& filename, glm::vec3 translation, bool hasMaterial,
+             Material material= Material()) {
 
     if (hasMaterial) {
       this->setMaterial(material);
@@ -299,8 +292,7 @@ public:
       if (line[1] == 'n') {
         // normal
         sscanf(line.c_str(), "vn %f %f %f", &x, &y, &z);
-        normals.push_back(
-            glm::vec3(x + translation.x, y + translation.y, z + translation.z));
+        normals.emplace_back(x + translation.x, y + translation.y, z + translation.z);
       } else if (line[0] == 'v') {
         // vertex
         sscanf(line.c_str(), "v %f %f %f", &x, &y, &z);
@@ -352,8 +344,8 @@ public:
     node = new bvh_node(triangles);
   }
 
-  Hit intersect(Ray &ray) {
-    Hit closest_hit;
+  Hit intersect(Ray &ray) override {
+    Hit closest_hit{};
 
     closest_hit.hit = false;
     closest_hit.distance = INFINITY;
