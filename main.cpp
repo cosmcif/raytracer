@@ -10,9 +10,9 @@
 #include <ctime>
 #include <iostream>
 
-#include "Image.h"
 #include "Objects.h"
 #include "MeshLoader.h"
+#include "Image.h"
 
 using namespace std;
 
