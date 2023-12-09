@@ -19,63 +19,26 @@ private:
 
 public:
   glm::vec3 vertices[3];
+
   /**
-   Constructor for triangle, given vertices and point normals
+   Constructor for triangle, given vertices and optionally point normals
   */
   Triangle(glm::vec3 vertexA, glm::vec3 vertexB, glm::vec3 vertexC,
-           glm::vec3 normalA, glm::vec3 normalB, glm::vec3 normalC)
+           glm::vec3 normalA = glm::vec3(0.0f),
+           glm::vec3 normalB = glm::vec3(0.0f),
+           glm::vec3 normalC = glm::vec3(0.0f))
       : vertexA(vertexA), vertexB(vertexB), vertexC(vertexC), normalA(normalA),
-        normalB(normalB), normalC(normalC), vertexNormals(true) {
-    // normal = glm::normalize(normalA + normalB + normalC);
-    glm::vec3 AB = vertexB - vertexA;
-    glm::vec3 AC = vertexC - vertexA;
-    normal = glm::normalize(glm::cross(AB, AC));
-    vertices[0] = vertexA;
-    vertices[1] = vertexB;
-    vertices[2] = vertexC;
-  }
+        normalB(normalB), normalC(normalC),
+        // if one of these is NOT 0, then it's true
+        // what all normals are 0? is it even possible??
+        vertexNormals(normalA != glm::vec3(0.0f) ||
+                      normalB != glm::vec3(0.0f) ||
+                      normalC != glm::vec3(0.0f)) {
 
-  /**
- Constructor for triangle, given vertices and point normals and material
-*/
-  Triangle(glm::vec3 vertexA, glm::vec3 vertexB, glm::vec3 vertexC,
-           glm::vec3 normalA, glm::vec3 normalB, glm::vec3 normalC,
-           Material material)
-      : vertexA(vertexA), vertexB(vertexB), vertexC(vertexC), normalA(normalA),
-        normalB(normalB), normalC(normalC), vertexNormals(true) {
-    // normal = glm::normalize(normalA + normalB + normalC);
     glm::vec3 AB = vertexB - vertexA;
     glm::vec3 AC = vertexC - vertexA;
     normal = glm::normalize(glm::cross(AB, AC));
-    this->material = material;
-    vertices[0] = vertexA;
-    vertices[1] = vertexB;
-    vertices[2] = vertexC;
-  }
 
-  /**
-   Constructor for triangle, given only vertices
-  */
-  Triangle(glm::vec3 vertexA, glm::vec3 vertexB, glm::vec3 vertexC)
-      : vertexA(vertexA), vertexB(vertexB), vertexC(vertexC) {
-    glm::vec3 AB = vertexB - vertexA;
-    glm::vec3 AC = vertexC - vertexA;
-    normal = glm::normalize(glm::cross(AB, AC));
-    vertices[0] = vertexA;
-    vertices[1] = vertexB;
-    vertices[2] = vertexC;
-  }
-
-  /**
-   Constructor for triangle, given only vertices & material
-  */
-  Triangle(glm::vec3 vertexA, glm::vec3 vertexB, glm::vec3 vertexC,
-           Material material)
-      : vertexA(vertexA), vertexB(vertexB), vertexC(vertexC) {
-    glm::vec3 AB = vertexB - vertexA;
-    glm::vec3 AC = vertexC - vertexA;
-    normal = glm::normalize(glm::cross(AB, AC));
-    this->material = material;
     vertices[0] = vertexA;
     vertices[1] = vertexB;
     vertices[2] = vertexC;
@@ -311,67 +274,13 @@ private:
   bvh_node *node;
 
 public:
-  MeshLoader(std::string filename, glm::vec3 translation) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-      std::cout << "Could not open file " << filename << std::endl;
-      return;
+  MeshLoader(std::string filename, glm::vec3 translation, bool hasMaterial,
+             Material material) {
+
+    if (hasMaterial) {
+      this->setMaterial(material);
     }
 
-    std::string line;
-
-    float x, y, z, nx, ny, nz;
-    int smoothShading = 0;
-    glm::vec3 minBounds = glm::vec3(INFINITY);
-    glm::vec3 maxBounds = glm::vec3(-INFINITY);
-
-    while (getline(file, line)) {
-      if (line[1] == 'n') {
-        // normal
-        sscanf(line.c_str(), "vn %f %f %f", &x, &y, &z);
-        normals.push_back(
-            glm::vec3(x + translation.x, y + translation.y, z + translation.z));
-      } else if (line[0] == 'v') {
-        // vertex
-        sscanf(line.c_str(), "v %f %f %f", &x, &y, &z);
-        glm::vec3 vertex(x + translation.x, y + translation.y,
-                         z + translation.z);
-        vertices.push_back(vertex);
-        minBounds.x = std::min(minBounds.x, vertex.x);
-        minBounds.y = std::min(minBounds.y, vertex.y);
-        minBounds.z = std::min(minBounds.z, vertex.z);
-
-        maxBounds.x = std::max(maxBounds.x, vertex.x);
-        maxBounds.y = std::max(maxBounds.y, vertex.y);
-        maxBounds.z = std::max(maxBounds.z, vertex.z);
-      } else if (line[0] == 's') {
-        // smooth shading
-        sscanf(line.c_str(), "s %d", &smoothShading);
-      } else if (line[0] == 'f') {
-        // face
-        // if smoothShading == 0, there are no normals
-        if (smoothShading == 0) {
-          sscanf(line.c_str(), "f %f %f %f", &x, &y, &z);
-          triangles.push_back(
-              Triangle(vertices[x - 1], vertices[y - 1], vertices[z - 1]));
-        } else {
-          sscanf(line.c_str(), "f %f//%f %f//%f %f//%f", &x, &nx, &y, &ny, &z,
-                 &nz);
-          triangles.push_back(Triangle(vertices[x - 1], vertices[y - 1],
-                                       vertices[z - 1], normals[nx - 1],
-                                       normals[ny - 1], normals[nz - 1]));
-        }
-      }
-    }
-
-    file.close();
-
-    boundingBox = BoundingBox(minBounds, maxBounds);
-    node = new bvh_node(triangles);
-  }
-
-  MeshLoader(std::string filename, glm::vec3 translation, Material material) {
-    this->setMaterial(material);
     std::ifstream file(filename);
     if (!file.is_open()) {
       std::cout << "Could not open file " << filename << std::endl;
@@ -417,14 +326,23 @@ public:
         // if smoothShading == 0, there are no normals
         if (smoothShading == 0) {
           sscanf(line.c_str(), "f %f %f %f", &x, &y, &z);
-          triangles.push_back(Triangle(vertices[x - 1], vertices[y - 1],
-                                       vertices[z - 1], material));
+          Triangle triangle =
+              Triangle(vertices[x - 1], vertices[y - 1], vertices[z - 1]);
+          if (hasMaterial) {
+            triangle.setMaterial(material);
+          }
+          triangles.push_back(triangle);
         } else {
           sscanf(line.c_str(), "f %f//%f %f//%f %f//%f", &x, &nx, &y, &ny, &z,
                  &nz);
-          triangles.push_back(Triangle(
-              vertices[x - 1], vertices[y - 1], vertices[z - 1],
-              normals[nx - 1], normals[ny - 1], normals[nz - 1], material));
+
+          Triangle triangle =
+              Triangle(vertices[x - 1], vertices[y - 1], vertices[z - 1],
+                       normals[nx - 1], normals[ny - 1], normals[nz - 1]);
+          if (hasMaterial) {
+            triangle.setMaterial(material);
+          }
+          triangles.push_back(triangle);
         }
       }
     }
