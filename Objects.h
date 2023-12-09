@@ -33,11 +33,11 @@ public:
    * @param ray The ray to check for intersection.
    * @return The Hit structure representing the intersection.
    */
-  Hit intersect(Ray ray) {
-    glm::vec3 newOrigin =
-        glm::vec3(inverseTransformationMatrix * glm::vec4(ray.origin, 1.0));
-    glm::vec3 newDirection = glm::normalize(
-        glm::vec3(inverseTransformationMatrix * glm::vec4(ray.direction, 0.0)));
+  Hit intersect(Ray &ray) {
+
+    Ray newRay = toLocalRay(ray);
+    glm::vec3 newOrigin = newRay.origin;
+    glm::vec3 newDirection = newRay.direction;
 
     glm::vec3 c = center - newOrigin;
     float cdotc = glm::dot(c, c);
@@ -92,7 +92,7 @@ private:
   glm::vec3 normal = glm::vec3(0.0f, 1.0f, 0.0f);
 
   // A point on the plane.
-  glm::vec3 point = glm::vec3(0.0f); 
+  glm::vec3 point = glm::vec3(0.0f);
 
 public:
   /**
@@ -119,7 +119,7 @@ public:
    * @param ray The ray to check for intersection.
    * @return The Hit structure representing the intersection.
    */
-  Hit intersect(Ray ray) {
+  Hit intersect(Ray &ray) {
     Hit hit;
     hit.hit = false;
 
@@ -170,7 +170,7 @@ public:
    * @param ray The ray to check for intersection.
    * @return The Hit structure representing the intersection.
    */
-  Hit intersect(Ray ray) {
+  Hit intersect(Ray &ray) {
     Hit hit;
     hit.hit = false;
     float height = 1.0;
