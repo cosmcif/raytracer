@@ -6,7 +6,7 @@ Computer Graphics rendering competition 2023
 - Nicolò Tafta
 
 # Features
-- [ ] **Stochastic Raytracer - Antialiasing (2 points)**
+- [x] **Stochastic Raytracer - Antialiasing (2 points)**
 - [ ] **Stochastic Raytracer - Depth-of-Field Effect (5 points)**
 - [ ] **Stochastic Raytracer - Soft Shadows (5 points)**
 - [ ] **Photon Mapping (15 points)**
