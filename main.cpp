@@ -233,9 +233,8 @@ int main(int argc, const char *argv[]) {
         for (int j = 0; j < height; j++) {
             glm::vec3 pixelColor(0.0f);
 
-            // Jittered sampling
+            // super sampling anti aliasin
             for (int sample = 0; sample < 4; ++sample) {
-                // Calculate jittered coordinates
                 float jitterX = jitterMatrix[2 * sample];
                 float jitterY = jitterMatrix[2 * sample + 1];
 
@@ -250,14 +249,10 @@ int main(int argc, const char *argv[]) {
 
                 Ray ray(origin, direction);
 
-                // Accumulate color
                 pixelColor += trace_ray(ray);
             }
 
-            // Average the accumulated color
             pixelColor /= 4.0f;
-
-            // Apply tone mapping and set pixel color
             image.setPixel(i, j, toneMapping(pixelColor));
         }
 
