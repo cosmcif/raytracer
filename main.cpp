@@ -7,6 +7,8 @@
 
 #include <ctime>
 #include <iostream>
+#include <omp.h>
+#include <chrono>
 
 #include "Objects.h"
 #include "MeshLoader.h"
@@ -224,8 +226,9 @@ void sceneDefinition() {
 }
 
 int main(int argc, const char *argv[]) {
+    cout << "Running on " << omp_get_max_threads() << " threads\n";
 
-    clock_t t = clock(); // variable for keeping the time of the rendering
+    chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
     int width = 1024; // width of the image
     // int width = 320;
@@ -237,9 +240,17 @@ int main(int argc, const char *argv[]) {
 
     Image image(width, height); // Create an image where we will store the result
 
-    float s = 2 * tan(0.5 * fov / 180 * M_PI) / width;
-    float X = -s * width / 2;
-    float Y = s * height / 2;
+    const float s = 2 * tan(0.5 * fov / 180 * M_PI) / width;
+    const float X = -s * width / 2;
+    const float Y = s * height / 2;
+
+    // Define tiles for parallelization
+    // Tiles are a good way to parallelize ray tracing since we can expect that rays in the same tile will behave similarly (i.e. they will hit the same objects).
+    const int tile_size = 16;
+    const int tiles_x = (width + tile_size - 1) / tile_size;   // add one tile if width is not a multiple of tile_size
+    const int tiles_y = (height + tile_size - 1) / tile_size;  // add one tile if height is not a multiple of tile_size
+    const int tile_count = tiles_x * tiles_y;
+    glm::vec3 origin(0, 0, 0);
 
     float jitterMatrix[4 * 2] = {
             -1.0 / 4.0, 3.0 / 4.0,
@@ -248,46 +259,57 @@ int main(int argc, const char *argv[]) {
             1.0 / 4.0, -3.0 / 4.0,
     };
 
-    for (int i = 0; i < width; i++)
-        for (int j = 0; j < height; j++) {
-            glm::vec3 pixelColor(0.0f);
+#pragma omp parallel for schedule(dynamic, 1)
+    for (int tile = 0; tile < tile_count; tile++) {
+        if (omp_get_thread_num() == 0) {
+            cout << "Progress: " << ceil((float) tile / tile_count * 10000) / 100 << "%\r";
+            cout.flush();
+        }
+        // Compute the tile coordinates
+        const int tile_j = tile / tiles_x;                             // the tile column number
+        const int tile_i = tile - tile_j * tiles_x;                    // the tile row number
+        const int tile_i_start = tile_i * tile_size;                   // the x coordinate of the tile
+        const int tile_j_start = tile_j * tile_size;                   // the y coordinate of the tile
+        const int tile_i_end = min(tile_i_start + tile_size, width);   // the x coordinate of the tile + tile_size
+        const int tile_j_end = min(tile_j_start + tile_size, height);  // the y coordinate of the tile + tile_size
 
-            // super sampling anti aliasin
-            for (int sample = 0; sample < 4; ++sample) {
-                float jitterX = jitterMatrix[2 * sample];
-                float jitterY = jitterMatrix[2 * sample + 1];
+        for (int i = tile_i_start; i < tile_i_end; i++)
+            for (int j = tile_j_start; j < tile_j_end; j++) {
+                glm::vec3 pixelColor(0.0f);
 
-                float dx = X + (i + jitterX) * s + s / 2;
-                float dy = Y - (j + jitterY) * s - s / 2;
-                float dz = 1;
+                // super sampling anti aliasing
+                for (int sample = 0; sample < 4; ++sample) {
+                    float jitterX = jitterMatrix[2 * sample];
+                    float jitterY = jitterMatrix[2 * sample + 1];
 
-                // Create ray
-                glm::vec3 origin(0, 0, 0);
-                glm::vec3 direction(dx, dy, dz);
-                direction = glm::normalize(direction);
+                    float dx = X + (i + jitterX) * s + s / 2;
+                    float dy = Y - (j + jitterY) * s - s / 2;
+                    float dz = 1;
 
-                Ray ray(origin, direction);
+                    // Create ray
+                    glm::vec3 direction(dx, dy, dz);
+                    direction = glm::normalize(direction);
 
-                pixelColor += trace_ray(ray);
+                    Ray ray(origin, direction);
+
+                    pixelColor += trace_ray(ray);
+                }
+
+                pixelColor /= 4.0f;
+                image.setPixel(i, j, toneMapping(pixelColor));
             }
 
-            pixelColor /= 4.0f;
-            image.setPixel(i, j, toneMapping(pixelColor));
+    }
+    chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
+    chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(end - start);
+    cout << "It took " << time_span.count() << " seconds to render the image." << endl;
+
+        // Writing the final results of the rendering
+        if (argc == 2) {
+            image.writeImage(argv[1]);
+        } else {
+            image.writeImage("./result.ppm");
         }
 
-
-    t = clock() - t;
-    cout << "It took " << ((float) t) / CLOCKS_PER_SEC
-         << " seconds to render the image." << endl;
-    cout << "I could render at " << (float) CLOCKS_PER_SEC / ((float) t)
-         << " frames per second." << endl;
-
-    // Writing the final results of the rendering
-    if (argc == 2) {
-        image.writeImage(argv[1]);
-    } else {
-        image.writeImage("./result.ppm");
+        return 0;
     }
-
-    return 0;
-}
