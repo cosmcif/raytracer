@@ -3,8 +3,6 @@
 */
 
 #include "glm/geometric.hpp"
-#include "glm/glm.hpp"
-#include "glm/gtx/transform.hpp"
 #include "glm/trigonometric.hpp"
 
 #include <ctime>
@@ -47,25 +45,39 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
     glm::vec3 color(0.0);
     for (auto &light: lights) {
 
-        glm::vec3 light_direction =
-                glm::normalize(light->position - point);
-        glm::vec3 reflected_direction = glm::reflect(-light_direction, normal);
+        glm::vec3 light_direction = glm::normalize(light->position - point);
+        float r = glm::distance(point, light->position);
+        r = max(r, 0.1f);
 
-        float NdotL = glm::clamp(glm::dot(normal, light_direction), 0.0f, 1.0f);
-        float VdotR =
-                glm::clamp(glm::dot(view_direction, reflected_direction), 0.0f, 1.0f);
-        glm::vec3 diffuse = material.diffuse * glm::vec3(NdotL);
-
-        if (material.texture) {
-            diffuse = material.texture(uv) * glm::vec3(NdotL);
+        bool shadow = false;
+        if (glm::dot(normal, view_direction) >= 0) {
+            Ray ray(point + 0.001f * light_direction, light_direction);
+            for (const auto &object: objects) {
+                Hit hit = object->intersect(ray);
+                if (hit.hit && hit.distance < r) {
+                    shadow = true;
+                    break;
+                }
+            }
         }
 
-        glm::vec3 specular =
-                material.specular * glm::vec3(pow(VdotR, material.shininess));
+        if (!shadow) {
+            glm::vec3 reflected_direction = glm::reflect(-light_direction, normal);
 
-        float att = glm::distance(point, light->position);
-        att = 1 / pow(max(0.5f, att), 2);
-        color += light->color * (diffuse + specular) * att;
+            float NdotL = glm::clamp(glm::dot(normal, light_direction), 0.0f, 1.0f);
+            float VdotR =
+                    glm::clamp(glm::dot(view_direction, reflected_direction), 0.0f, 1.0f);
+            glm::vec3 diffuse = material.diffuse * glm::vec3(NdotL);
+
+            if (material.texture) {
+                diffuse = material.texture(uv) * glm::vec3(NdotL);
+            }
+
+            glm::vec3 specular =
+                    material.specular * glm::vec3(pow(VdotR, material.shininess));
+
+            color += light->color * (diffuse + specular) / r / r;
+        }
     }
     color += ambient_light * material.ambient;
 
@@ -211,10 +223,10 @@ int main(int argc, const char *argv[]) {
 
     clock_t t = clock(); // variable for keeping the time of the rendering
 
-    int width = 1024; // width of the image
-    // int width = 320;
-    int height = 768; // height of the image
-    // int height = 210;
+    //int width = 1024; // width of the image
+     int width = 320;
+    //int height = 768; // height of the image
+     int height = 210;
     float fov = 90; // field of view
 
     sceneDefinition(); // Let's define a scene
