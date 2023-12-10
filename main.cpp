@@ -10,6 +10,7 @@
 
 #include "Objects.h"
 #include "MeshLoader.h"
+#include "Shadows.h"
 #include "Image.h"
 
 using namespace std;
@@ -76,7 +77,10 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
             glm::vec3 specular =
                     material.specular * glm::vec3(pow(VdotR, material.shininess));
 
-            color += light->color * (diffuse + specular) / r / r;
+            SoftShadow softShadow(light->position);
+            glm::vec3 shadowFactor = softShadow.computeSoftShadow(point, normal, objects);
+
+            color += light->color * shadowFactor * (diffuse + specular) / r / r;
         }
     }
     color += ambient_light * material.ambient;
@@ -223,10 +227,10 @@ int main(int argc, const char *argv[]) {
 
     clock_t t = clock(); // variable for keeping the time of the rendering
 
-    //int width = 1024; // width of the image
-     int width = 320;
-    //int height = 768; // height of the image
-     int height = 210;
+    int width = 1024; // width of the image
+    // int width = 320;
+    int height = 768; // height of the image
+    // int height = 210;
     float fov = 90; // field of view
 
     sceneDefinition(); // Let's define a scene
