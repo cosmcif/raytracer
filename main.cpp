@@ -24,6 +24,7 @@ public:
     glm::vec3 position; ///< Position of the light source
     glm::vec3 color;    ///< Color/intentisty of the light source
     explicit Light(glm::vec3 position) : position(position), color(glm::vec3(1.0)) {}
+
     Light(glm::vec3 position, glm::vec3 color)
             : position(position), color(color) {}
 };
@@ -44,7 +45,7 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
                      glm::vec3 view_direction, Material material) {
 
     glm::vec3 color(0.0);
-    for (auto & light : lights) {
+    for (auto &light: lights) {
 
         glm::vec3 light_direction =
                 glm::normalize(light->position - point);
@@ -84,7 +85,7 @@ glm::vec3 trace_ray(Ray ray) {
     closest_hit.hit = false;
     closest_hit.distance = INFINITY;
 
-    for (auto & object : objects) {
+    for (auto &object: objects) {
         Hit hit = object->intersect(ray);
         if (hit.hit && hit.distance < closest_hit.distance)
             closest_hit = hit;
@@ -206,7 +207,6 @@ void sceneDefinition() {
     lights.push_back(new Light(glm::vec3(0, 5, 1), glm::vec3(45.0)));
 }
 
-
 int main(int argc, const char *argv[]) {
 
     clock_t t = clock(); // variable for keeping the time of the rendering
@@ -225,21 +225,40 @@ int main(int argc, const char *argv[]) {
     float X = -s * width / 2;
     float Y = s * height / 2;
 
+    float jitterMatrix[4 * 2] = {
+            -1.0 / 4.0, 3.0 / 4.0,
+            3.0 / 4.0, 1.0 / 3.0,
+            -3.0 / 4.0, -1.0 / 4.0,
+            1.0 / 4.0, -3.0 / 4.0,
+    };
+
     for (int i = 0; i < width; i++)
         for (int j = 0; j < height; j++) {
+            glm::vec3 pixelColor(0.0f);
 
-            float dx = X + i * s + s / 2;
-            float dy = Y - j * s - s / 2;
-            float dz = 1;
+            // super sampling anti aliasin
+            for (int sample = 0; sample < 4; ++sample) {
+                float jitterX = jitterMatrix[2 * sample];
+                float jitterY = jitterMatrix[2 * sample + 1];
 
-            glm::vec3 origin(0, 0, 0);
-            glm::vec3 direction(dx, dy, dz);
-            direction = glm::normalize(direction);
+                float dx = X + (i + jitterX) * s + s / 2;
+                float dy = Y - (j + jitterY) * s - s / 2;
+                float dz = 1;
 
-            Ray ray(origin, direction);
+                // Create ray
+                glm::vec3 origin(0, 0, 0);
+                glm::vec3 direction(dx, dy, dz);
+                direction = glm::normalize(direction);
 
-            image.setPixel(i, j, toneMapping(trace_ray(ray)));
+                Ray ray(origin, direction);
+
+                pixelColor += trace_ray(ray);
+            }
+
+            pixelColor /= 4.0f;
+            image.setPixel(i, j, toneMapping(pixelColor));
         }
+
 
     t = clock() - t;
     cout << "It took " << ((float) t) / CLOCKS_PER_SEC
