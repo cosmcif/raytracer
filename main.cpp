@@ -6,9 +6,7 @@
 #include "glm/trigonometric.hpp"
 #include "glm/gtx/transform.hpp"
 
-#include <ctime>
 #include <iostream>
-#include <omp.h>
 #include <chrono>
 
 #include "Objects.h"
@@ -165,8 +163,10 @@ void sceneDefinition() {
     blue_copper_specular.specular = glm::vec3(0.6);
     blue_copper_specular.shininess = 100.0;
 
-    objects.push_back(new MeshLoader("./meshes/bunny.obj",
-                                     glm::vec3(0, -3, 9), true, orange_specular));
+    //  objects.push_back(new MeshLoader("./meshes/bunny.obj",
+    //                                 glm::vec3(0, -3, 9), true, orange_specular));
+
+
 
     // plane in the front
     objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, -0.1f),
@@ -217,8 +217,26 @@ void sceneDefinition() {
         c2->setTransformation(transformationMatrix2);
         objects.push_back(c2);
 
-    }*/
+        }
+*/
 
+    Cone *redSphere = new Cone(orange_specular);
+    glm::mat4 transformationMatrix1 =
+            glm::translate(glm::vec3(-3, 2.5, 6)) *
+            glm::rotate(glm::radians(180.0f), glm::vec3(0, 0, 1)) *
+            glm::scale(glm::vec3(1, 4, 1));
+
+    redSphere->setTransformation(transformationMatrix1);
+    objects.push_back(redSphere);
+
+    Cone *rdSphere = new Cone(orange_specular);
+    glm::mat4 transformationMatri1 =
+            glm::translate(glm::vec3(6, 2.5, 13)) *
+            glm::rotate(glm::radians(180.0f), glm::vec3(0, 0, 1)) *
+            glm::scale(glm::vec3(1, 4, 1));
+
+    rdSphere->setTransformation(transformationMatri1);
+    objects.push_back(rdSphere);
 
     lights.push_back(
             new Light(glm::vec3(0, 26, 5), glm::vec3(130.0))); // top light
@@ -232,8 +250,8 @@ int main(int argc, const char *argv[]) {
 
     chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
-    int width = /*320 1024 2048*/ 2048; // width of the image
-    int height = /*210 768 1536*/ 1536; // height of the image
+    int width = /*320 1024 2048*/ 1024; // width of the image
+    int height = /*210 768 1536*/ 768; // height of the image
 
     float fov = 90; // field of view
 
@@ -305,12 +323,12 @@ int main(int argc, const char *argv[]) {
     chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(end - start);
     cout << "It took " << time_span.count() << " seconds to render the image." << endl;
 
-        // Writing the final results of the rendering
-        if (argc == 2) {
-            image.writeImage(argv[1]);
-        } else {
-            image.writeImage("./result.ppm");
-        }
-
-        return 0;
+    // Writing the final results of the rendering
+    if (argc == 2) {
+        image.writeImage(argv[1]);
+    } else {
+        image.writeImage("./result.ppm");
     }
+
+    return 0;
+}
