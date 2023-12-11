@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <chrono>
+#include <memory>
 
 #include "Objects.h"
 #include "MeshLoader.h"
@@ -16,22 +17,26 @@
 
 using namespace std;
 
-/**
- Light class
- */
-class Light {
-public:
-    glm::vec3 position; ///< Position of the light source
-    glm::vec3 color;    ///< Color/intentisty of the light source
-    explicit Light(glm::vec3 position) : position(position), color(glm::vec3(1.0)) {}
-
-    Light(glm::vec3 position, glm::vec3 color)
-            : position(position), color(color) {}
-};
-
 vector<Light *> lights; ///< A list of lights in the scene
 glm::vec3 ambient_light(0.7);
 vector<Object *> objects; ///< A list of all objects in the scene
+
+float intensity_at(AreaLight *light, glm::vec3 point) {
+    float intensity = 0.0;
+
+    for (int u = 0; u < light->usteps; u++) {
+        for (int v = 0; v < light->vsteps; v++) {
+            glm::vec3 light_position = light->point_on_light(u, v);
+            float r = glm::distance(point, light_position);
+            if (!isShadowed(point, glm::normalize(light->position - point), objects, max(r, 0.1f))) {
+                intensity++;
+            }
+        }
+    }
+
+    return intensity / light->getTotalCells();
+}
+
 
 /** Function for computing color of an object according to the Phong Model
  @param point A point belonging to the object for which the color is computer
@@ -51,37 +56,31 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
         float r = glm::distance(point, light->position);
         r = max(r, 0.1f);
 
-        bool shadow = false;
         if (glm::dot(normal, view_direction) >= 0) {
-            Ray ray(point + 0.001f * light_direction, light_direction);
-            for (const auto &object: objects) {
-                Hit hit = object->intersect(ray);
-                if (hit.hit && hit.distance < r) {
-                    shadow = true;
-                    break;
+            if (!isShadowed(point, light_direction, objects, r)) {
+                glm::vec3 reflected_direction = glm::reflect(-light_direction, normal);
+
+                float NdotL = glm::clamp(glm::dot(normal, light_direction), 0.0f, 1.0f);
+                float VdotR =
+                        glm::clamp(glm::dot(view_direction, reflected_direction), 0.0f, 1.0f);
+                glm::vec3 diffuse = material.diffuse * glm::vec3(NdotL);
+
+                if (material.texture) {
+                    diffuse = material.texture(uv) * glm::vec3(NdotL);
                 }
+
+                glm::vec3 specular =
+                        material.specular * glm::vec3(pow(VdotR, material.shininess));
+
+                //SoftShadow softShadow(light->position);
+                //glm::vec3 shadowFactor = softShadow.computeSoftShadow(point, normal, objects);
+
+                float shadowFactor = 1.0;
+                if (auto *areaLight = dynamic_cast<AreaLight *>(light)) {
+                    shadowFactor = intensity_at(areaLight, point);
+                }
+                color += light->color * shadowFactor * (diffuse + specular) / r / r;
             }
-        }
-
-        if (!shadow) {
-            glm::vec3 reflected_direction = glm::reflect(-light_direction, normal);
-
-            float NdotL = glm::clamp(glm::dot(normal, light_direction), 0.0f, 1.0f);
-            float VdotR =
-                    glm::clamp(glm::dot(view_direction, reflected_direction), 0.0f, 1.0f);
-            glm::vec3 diffuse = material.diffuse * glm::vec3(NdotL);
-
-            if (material.texture) {
-                diffuse = material.texture(uv) * glm::vec3(NdotL);
-            }
-
-            glm::vec3 specular =
-                    material.specular * glm::vec3(pow(VdotR, material.shininess));
-
-            //SoftShadow softShadow(light->position);
-            //glm::vec3 shadowFactor = softShadow.computeSoftShadow(point, normal, objects);
-
-            color += light->color * (diffuse + specular) / r / r;
         }
     }
     color += ambient_light * material.ambient;
@@ -160,7 +159,7 @@ void sceneDefinition() {
     Material blue_copper_specular;
     blue_copper_specular.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
     blue_copper_specular.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
-    blue_copper_specular.specular = glm::vec3(0.6);
+    blue_copper_specular.specular = glm::vec3(1.0);
     blue_copper_specular.shininess = 100.0;
 
     //  objects.push_back(new MeshLoader("./meshes/bunny.obj",
@@ -238,11 +237,14 @@ void sceneDefinition() {
     rdSphere->setTransformation(transformationMatri1);
     objects.push_back(rdSphere);
 
+    //lights.push_back(
+    //        new Light(glm::vec3(0, 26, 5), glm::vec3(130.0))); // top light
+    // lights.push_back(
+    //        new Light(glm::vec3(0, 1, 12), glm::vec3(15.0))); // floor light
+    //lights.push_back(new Light(glm::vec3(0, 5, 1), glm::vec3(45.0)));
+
     lights.push_back(
-            new Light(glm::vec3(0, 26, 5), glm::vec3(130.0))); // top light
-    lights.push_back(
-            new Light(glm::vec3(0, 1, 12), glm::vec3(15.0))); // floor light
-    lights.push_back(new Light(glm::vec3(0, 5, 1), glm::vec3(45.0)));
+            new AreaLight(glm::vec3(-2, 18, 5), glm::vec3(4, 0, 0), 4, glm::vec3(0, 2, 0), 2, glm::vec3(150.0)));
 }
 
 int main(int argc, const char *argv[]) {

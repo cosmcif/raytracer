@@ -9,6 +9,7 @@
 #include "glm/gtc/random.hpp"
 #include <vector>
 #include <omp.h>
+#include "Lights.h"
 
 
 class SoftShadow {
@@ -72,4 +73,15 @@ public:
     }
 };
 
+bool isShadowed(glm::vec3 point, glm::vec3 light_direction, const std::vector<Object *> &objects, float r) {
+    Ray ray(point + 0.001f * light_direction, light_direction);
+    for (const auto &object: objects) {
+        Hit hit = object->intersect(ray);
+        if (hit.hit && hit.distance < r) {
+            return true;
+        }
+    }
+
+    return false;
+}
 #endif //RAYTRACER_SHADOWS_H
