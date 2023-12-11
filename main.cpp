@@ -9,6 +9,8 @@
 
 #include <ctime>
 #include <iostream>
+#include <omp.h>
+#include <chrono>
 
 #include "Objects.h"
 #include "MeshLoader.h"
@@ -24,6 +26,7 @@ public:
     glm::vec3 position; ///< Position of the light source
     glm::vec3 color;    ///< Color/intentisty of the light source
     explicit Light(glm::vec3 position) : position(position), color(glm::vec3(1.0)) {}
+
     Light(glm::vec3 position, glm::vec3 color)
             : position(position), color(color) {}
 };
@@ -42,29 +45,39 @@ vector<Object *> objects; ///< A list of all objects in the scene
 */
 glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
                      glm::vec3 view_direction, Material material) {
-
     glm::vec3 color(0.0);
-    for (auto & light : lights) {
-
-        glm::vec3 light_direction =
-                glm::normalize(light->position - point);
-        glm::vec3 reflected_direction = glm::reflect(-light_direction, normal);
-
-        float NdotL = glm::clamp(glm::dot(normal, light_direction), 0.0f, 1.0f);
-        float VdotR =
-                glm::clamp(glm::dot(view_direction, reflected_direction), 0.0f, 1.0f);
-        glm::vec3 diffuse = material.diffuse * glm::vec3(NdotL);
-
-        if (material.texture) {
-            diffuse = material.texture(uv) * glm::vec3(NdotL);
+    for (auto &light: lights) {
+        glm::vec3 light_direction = glm::normalize(light->position - point);
+        float r = glm::distance(point, light->position);
+        r = max(r, 0.1f);
+        bool shadow = false;
+        if (glm::dot(normal, view_direction) >= 0) {
+            Ray ray(point + 0.001f * light_direction, light_direction);
+            for (const auto &object: objects) {
+                Hit hit = object->intersect(ray);
+                if (hit.hit && hit.distance < r) {
+                    shadow = true;
+                    break;
+                }
+            }
         }
+        if (!shadow) {
+            glm::vec3 reflected_direction = glm::reflect(-light_direction, normal);
+            float NdotL = glm::clamp(glm::dot(normal, light_direction), 0.0f, 1.0f);
+            float VdotR =
+                    glm::clamp(glm::dot(view_direction, reflected_direction), 0.0f, 1.0f);
+            glm::vec3 diffuse = material.diffuse * glm::vec3(NdotL);
+            if (material.texture) {
+                diffuse = material.texture(uv) * glm::vec3(NdotL);
+            }
+            glm::vec3 specular =
+                    material.specular * glm::vec3(pow(VdotR, material.shininess));
 
-        glm::vec3 specular =
-                material.specular * glm::vec3(pow(VdotR, material.shininess));
+            //SoftShadow softShadow(light->position);
+            //glm::vec3 shadowFactor = softShadow.computeSoftShadow(point, normal, objects);
 
-        float att = glm::distance(point, light->position);
-        att = 1 / pow(max(0.5f, att), 2);
-        color += light->color * (diffuse + specular) * att;
+            color += light->color * (diffuse + specular) / r / r;
+        }
     }
     color += ambient_light * material.ambient;
 
@@ -84,7 +97,7 @@ glm::vec3 trace_ray(Ray ray) {
     closest_hit.hit = false;
     closest_hit.distance = INFINITY;
 
-    for (auto & object : objects) {
+    for (auto &object: objects) {
         Hit hit = object->intersect(ray);
         if (hit.hit && hit.distance < closest_hit.distance)
             closest_hit = hit;
@@ -145,19 +158,28 @@ void sceneDefinition() {
     objects.push_back(new MeshLoader("./meshes/armadillo.obj",
                                      glm::vec3(0, -3, 9), true, orange_specular));
 
+    // plane in the front
+    objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, -0.1f),
+                                glm::vec3(0.0f, 0.0f, 1.0f), true, blue_copper_specular));
     // plane in the back
-    objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, 300.0f),
-                                glm::vec3(0.0f, 0.0f, -1.0f),
-                                true,
-                                blue_copper_specular));
+    objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, 30.0f),
+                                glm::vec3(0.0f, 0.0f, -1.0f), true, blue_copper_specular));
+
+    // plane on the left
+    objects.push_back(new Plane(glm::vec3(-15.0f, 12.0f, 14.995f),
+                                glm::vec3(1.0f, 0.0f, 0.0f), true, blue_copper_specular));
+    // plane on the right
+    objects.push_back(new Plane(glm::vec3(15.0f, 12.0f, 14.995f),
+                                glm::vec3(-1.0f, 0.0f, 0.0f), true, blue_copper_specular));
 
     // plane on bottom
     objects.push_back(new Plane(glm::vec3(0.0f, -3.0f, 14.995f),
-                                glm::vec3(0.0f, 1.0f, 0.0f),
-                                true,
-                                blue_copper_specular));
+                                glm::vec3(0.0f, 1.0f, 0.0f), true, blue_copper_specular));
+    // plane on top
+    objects.push_back(new Plane(glm::vec3(0.0f, 27.0f, 14.995f),
+                                glm::vec3(0.0f, -1.0f, 0.0f), true, blue_copper_specular));
 
-
+/*
     for (int x = -20; x <= 20; x += 2) {
         double z = 20 + sqrt(100 - 0.3075 * x * x);
 
@@ -185,6 +207,7 @@ void sceneDefinition() {
         c2->setTransformation(transformationMatrix2);
         objects.push_back(c2);
     }
+    */
 
     lights.push_back(
             new Light(glm::vec3(0, 26, 5), glm::vec3(130.0))); // top light
@@ -193,46 +216,82 @@ void sceneDefinition() {
     lights.push_back(new Light(glm::vec3(0, 5, 1), glm::vec3(45.0)));
 }
 
-
 int main(int argc, const char *argv[]) {
+    cout << "Running on " << omp_get_max_threads() << " threads\n";
 
-    clock_t t = clock(); // variable for keeping the time of the rendering
+    chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
-    int width = 1024; // width of the image
-    // int width = 320;
-    int height = 768; // height of the image
-    // int height = 210;
+    int width = /*320 1024 2048*/ 1024; // width of the image
+    int height = /*210 768 1536*/ 768; // height of the image
     float fov = 90; // field of view
 
     sceneDefinition(); // Let's define a scene
 
     Image image(width, height); // Create an image where we will store the result
 
-    float s = 2 * tan(0.5 * fov / 180 * M_PI) / width;
-    float X = -s * width / 2;
-    float Y = s * height / 2;
+    const float s = 2 * tan(0.5 * fov / 180 * M_PI) / width;
+    const float X = -s * width / 2;
+    const float Y = s * height / 2;
 
-    for (int i = 0; i < width; i++)
-        for (int j = 0; j < height; j++) {
+    // Define tiles for parallelization
+    // Tiles are a good way to parallelize ray tracing since we can expect that rays in the same tile will behave similarly (i.e. they will hit the same objects).
+    const int tile_size = 16;
+    const int tiles_x = (width + tile_size - 1) / tile_size;   // add one tile if width is not a multiple of tile_size
+    const int tiles_y = (height + tile_size - 1) / tile_size;  // add one tile if height is not a multiple of tile_size
+    const int tile_count = tiles_x * tiles_y;
+    glm::vec3 origin(0, 0, 0);
 
-            float dx = X + i * s + s / 2;
-            float dy = Y - j * s - s / 2;
-            float dz = 1;
 
-            glm::vec3 origin(0, 0, 0);
-            glm::vec3 direction(dx, dy, dz);
-            direction = glm::normalize(direction);
-
-            Ray ray(origin, direction);
-
-            image.setPixel(i, j, toneMapping(trace_ray(ray)));
+    float jitterMatrix[4 * 2] = {
+            -1.0 / 4.0, 3.0 / 4.0,
+            3.0 / 4.0, 1.0 / 3.0,
+            -3.0 / 4.0, -1.0 / 4.0,
+            1.0 / 4.0, -3.0 / 4.0,
+    };
+#pragma omp parallel for schedule(dynamic, 1)
+    for (int tile = 0; tile < tile_count; tile++) {
+        if (omp_get_thread_num() == 0) {
+            cout << "Progress: " << ceil((float) tile / tile_count * 10000) / 100 << "%\r";
+            cout.flush();
         }
+        // Compute the tile coordinates
+        const int tile_j = tile / tiles_x;                             // the tile column number
+        const int tile_i = tile - tile_j * tiles_x;                    // the tile row number
+        const int tile_i_start = tile_i * tile_size;                   // the x coordinate of the tile
+        const int tile_j_start = tile_j * tile_size;                   // the y coordinate of the tile
+        const int tile_i_end = min(tile_i_start + tile_size, width);   // the x coordinate of the tile + tile_size
+        const int tile_j_end = min(tile_j_start + tile_size, height);  // the y coordinate of the tile + tile_size
 
-    t = clock() - t;
-    cout << "It took " << ((float) t) / CLOCKS_PER_SEC
-         << " seconds to render the image." << endl;
-    cout << "I could render at " << (float) CLOCKS_PER_SEC / ((float) t)
-         << " frames per second." << endl;
+        for (int i = tile_i_start; i < tile_i_end; i++)
+            for (int j = tile_j_start; j < tile_j_end; j++) {
+                glm::vec3 pixelColor(0.0f);
+
+                // super sampling anti aliasing
+                for (int sample = 0; sample < 4; ++sample) {
+                    float jitterX = jitterMatrix[2 * sample];
+                    float jitterY = jitterMatrix[2 * sample + 1];
+
+                    float dx = X + (i + jitterX) * s + s / 2;
+                    float dy = Y - (j + jitterY) * s - s / 2;
+                    float dz = 1;
+
+                    // Create ray
+                    glm::vec3 direction(dx, dy, dz);
+                    direction = glm::normalize(direction);
+
+                    Ray ray(origin, direction);
+
+                    pixelColor += trace_ray(ray);
+                }
+
+                pixelColor /= 4.0f;
+                image.setPixel(i, j, toneMapping(pixelColor));
+            }
+
+    }
+    chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now();
+    chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(end - start);
+    cout << "It took " << time_span.count() << " seconds to render the image." << endl;
 
     // Writing the final results of the rendering
     if (argc == 2) {
