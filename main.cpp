@@ -4,6 +4,7 @@
 
 #include "glm/geometric.hpp"
 #include "glm/trigonometric.hpp"
+#include "glm/gtx/transform.hpp"
 
 #include <ctime>
 #include <iostream>
@@ -79,10 +80,10 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
             glm::vec3 specular =
                     material.specular * glm::vec3(pow(VdotR, material.shininess));
 
-            SoftShadow softShadow(light->position);
-            glm::vec3 shadowFactor = softShadow.computeSoftShadow(point, normal, objects);
+            //SoftShadow softShadow(light->position);
+            //glm::vec3 shadowFactor = softShadow.computeSoftShadow(point, normal, objects);
 
-            color += light->color * shadowFactor * (diffuse + specular) / r / r;
+            color += light->color * (diffuse + specular) / r / r;
         }
     }
     color += ambient_light * material.ambient;
@@ -164,7 +165,7 @@ void sceneDefinition() {
     blue_copper_specular.specular = glm::vec3(0.6);
     blue_copper_specular.shininess = 100.0;
 
-    objects.push_back(new MeshLoader("./meshes/armadillo.obj",
+    objects.push_back(new MeshLoader("./meshes/bunny.obj",
                                      glm::vec3(0, -3, 9), true, orange_specular));
 
     // plane in the front
@@ -215,8 +216,9 @@ void sceneDefinition() {
 
         c2->setTransformation(transformationMatrix2);
         objects.push_back(c2);
-    }
-    */
+
+    }*/
+
 
     lights.push_back(
             new Light(glm::vec3(0, 26, 5), glm::vec3(130.0))); // top light
@@ -230,10 +232,9 @@ int main(int argc, const char *argv[]) {
 
     chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
-    int width = 1024; // width of the image
-    // int width = 320;
-    int height = 768; // height of the image
-    // int height = 210;
+    int width = /*320 1024 2048*/ 2048; // width of the image
+    int height = /*210 768 1536*/ 1536; // height of the image
+
     float fov = 90; // field of view
 
     sceneDefinition(); // Let's define a scene
