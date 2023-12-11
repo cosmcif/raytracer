@@ -45,29 +45,39 @@ vector<Object *> objects; ///< A list of all objects in the scene
 */
 glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
                      glm::vec3 view_direction, Material material) {
-
     glm::vec3 color(0.0);
     for (auto &light: lights) {
-
-        glm::vec3 light_direction =
-                glm::normalize(light->position - point);
-        glm::vec3 reflected_direction = glm::reflect(-light_direction, normal);
-
-        float NdotL = glm::clamp(glm::dot(normal, light_direction), 0.0f, 1.0f);
-        float VdotR =
-                glm::clamp(glm::dot(view_direction, reflected_direction), 0.0f, 1.0f);
-        glm::vec3 diffuse = material.diffuse * glm::vec3(NdotL);
-
-        if (material.texture) {
-            diffuse = material.texture(uv) * glm::vec3(NdotL);
+        glm::vec3 light_direction = glm::normalize(light->position - point);
+        float r = glm::distance(point, light->position);
+        r = max(r, 0.1f);
+        bool shadow = false;
+        if (glm::dot(normal, view_direction) >= 0) {
+            Ray ray(point + 0.001f * light_direction, light_direction);
+            for (const auto &object: objects) {
+                Hit hit = object->intersect(ray);
+                if (hit.hit && hit.distance < r) {
+                    shadow = true;
+                    break;
+                }
+            }
         }
+        if (!shadow) {
+            glm::vec3 reflected_direction = glm::reflect(-light_direction, normal);
+            float NdotL = glm::clamp(glm::dot(normal, light_direction), 0.0f, 1.0f);
+            float VdotR =
+                    glm::clamp(glm::dot(view_direction, reflected_direction), 0.0f, 1.0f);
+            glm::vec3 diffuse = material.diffuse * glm::vec3(NdotL);
+            if (material.texture) {
+                diffuse = material.texture(uv) * glm::vec3(NdotL);
+            }
+            glm::vec3 specular =
+                    material.specular * glm::vec3(pow(VdotR, material.shininess));
 
-        glm::vec3 specular =
-                material.specular * glm::vec3(pow(VdotR, material.shininess));
+            //SoftShadow softShadow(light->position);
+            //glm::vec3 shadowFactor = softShadow.computeSoftShadow(point, normal, objects);
 
-        float att = glm::distance(point, light->position);
-        att = 1 / pow(max(0.5f, att), 2);
-        color += light->color * (diffuse + specular) * att;
+            color += light->color * (diffuse + specular) / r / r;
+        }
     }
     color += ambient_light * material.ambient;
 
@@ -211,10 +221,8 @@ int main(int argc, const char *argv[]) {
 
     chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
-    int width = 1024; // width of the image
-    // int width = 320;
-    int height = 768; // height of the image
-    // int height = 210;
+    int width = /*320 1024 2048*/ 1024; // width of the image
+    int height = /*210 768 1536*/ 768; // height of the image
     float fov = 90; // field of view
 
     sceneDefinition(); // Let's define a scene
