@@ -155,6 +155,13 @@ void sceneDefinition() {
     blue_copper_specular.specular = glm::vec3(0.6);
     blue_copper_specular.shininess = 100.0;
 
+    Material terrain;
+    terrain.texture = &perlinTerrain;
+
+    Material ice;
+    ice.texture = &perlinIceTerrain;
+
+
     objects.push_back(new MeshLoader("./meshes/bunny.obj",
                                      glm::vec3(0, -3, 9), true, orange_specular));
 
@@ -174,7 +181,7 @@ void sceneDefinition() {
 
     // plane on bottom
     objects.push_back(new Plane(glm::vec3(0.0f, -3.0f, 14.995f),
-                                glm::vec3(0.0f, 1.0f, 0.0f), true, blue_copper_specular));
+                                glm::vec3(0.0f, 1.0f, 0.0f), true, ice));
     // plane on top
     objects.push_back(new Plane(glm::vec3(0.0f, 27.0f, 14.995f),
                                 glm::vec3(0.0f, -1.0f, 0.0f), true, blue_copper_specular));
@@ -209,16 +216,11 @@ void sceneDefinition() {
     }
     */
 
-    Material terrain;
-    terrain.texture = &perlinTerrain;
-
     Sphere *redSphere = new Sphere(terrain);
     redSphere->setTransformation(glm::translate(glm::vec3(3, -2, 6)) *
                                  glm::scale(glm::vec3(1)));
     objects.push_back(redSphere);
 
-    Material ice;
-    ice.texture = &perlinIceTerrain;
 
     Sphere *texturedSphere = new Sphere(ice);
     glm::mat4 texturedMatrix = glm::translate(glm::vec3(-6, 4, 23)) * glm::scale(glm::vec3(7.0));
@@ -239,8 +241,8 @@ int main(int argc, const char *argv[]) {
 
     chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
-    int width = /*320 1024 2048*/ 2048; // width of the image
-    int height = /*210 768 1536*/ 1536; // height of the image
+    int width = /*320 1024 2048*/ 1024; // width of the image
+    int height = /*210 768 1536*/ 768; // height of the image
     float fov = 90; // field of view
 
     sceneDefinition(); // Let's define a scene
