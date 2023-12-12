@@ -35,9 +35,10 @@ public:
      */
     Hit intersect(Ray &ray) override {
 
-        Ray newRay = toLocalRay(ray);
-        glm::vec3 newOrigin = newRay.origin;
-        glm::vec3 newDirection = newRay.direction;
+        glm::vec3 newOrigin =
+                glm::vec3(inverseTransformationMatrix * glm::vec4(ray.origin, 1.0));
+        glm::vec3 newDirection = glm::normalize(
+                glm::vec3(inverseTransformationMatrix * glm::vec4(ray.direction, 0.0)));
 
         glm::vec3 c = center - newOrigin;
         float cdotc = glm::dot(c, c);
@@ -137,6 +138,8 @@ public:
         hit.distance = t;
         hit.object = this;
         hit.hit = true;
+        hit.uv.x = 0.1 * hit.intersection.x;
+        hit.uv.y = 0.1 * hit.intersection.z;
 
         return hit;
     }
@@ -229,6 +232,10 @@ public:
         glm::vec3 newNormalGlobal =
                 glm::normalize(glm::vec3(normalMatrix * glm::vec4(newNormal, 0.0)));
         hit.normal = newNormalGlobal;
+
+        hit.uv.s = (asin(newNormal.y) + M_PI / 2) / M_PI;
+        hit.uv.t = (atan2(newNormal.z, newNormal.x) + M_PI) / (2 * M_PI);
+
         return hit;
     }
 };

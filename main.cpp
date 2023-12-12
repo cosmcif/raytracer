@@ -155,7 +155,14 @@ void sceneDefinition() {
     blue_copper_specular.specular = glm::vec3(0.6);
     blue_copper_specular.shininess = 100.0;
 
-    objects.push_back(new MeshLoader("./meshes/armadillo.obj",
+    Material terrain;
+    terrain.texture = &perlinTerrain;
+
+    Material ice;
+    ice.texture = &perlinIceTerrain;
+
+
+    objects.push_back(new MeshLoader("./meshes/bunny.obj",
                                      glm::vec3(0, -3, 9), true, orange_specular));
 
     // plane in the front
@@ -174,7 +181,7 @@ void sceneDefinition() {
 
     // plane on bottom
     objects.push_back(new Plane(glm::vec3(0.0f, -3.0f, 14.995f),
-                                glm::vec3(0.0f, 1.0f, 0.0f), true, blue_copper_specular));
+                                glm::vec3(0.0f, 1.0f, 0.0f), true, ice));
     // plane on top
     objects.push_back(new Plane(glm::vec3(0.0f, 27.0f, 14.995f),
                                 glm::vec3(0.0f, -1.0f, 0.0f), true, blue_copper_specular));
@@ -208,6 +215,19 @@ void sceneDefinition() {
         objects.push_back(c2);
     }
     */
+
+    Sphere *redSphere = new Sphere(terrain);
+    redSphere->setTransformation(glm::translate(glm::vec3(3, -2, 6)) *
+                                 glm::scale(glm::vec3(1)));
+    objects.push_back(redSphere);
+
+
+    Sphere *texturedSphere = new Sphere(ice);
+    glm::mat4 texturedMatrix = glm::translate(glm::vec3(-6, 4, 23)) * glm::scale(glm::vec3(7.0));
+    texturedSphere->setTransformation(texturedMatrix);
+
+    objects.push_back(texturedSphere);
+
 
     lights.push_back(
             new Light(glm::vec3(0, 26, 5), glm::vec3(130.0))); // top light
