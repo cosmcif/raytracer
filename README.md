@@ -24,3 +24,4 @@ Computer Graphics rendering competition 2023
 ![antialiasing](https://github.com/cosmcif/raytracer/assets/75504103/a6443798-2c27-4071-891f-efe593cd9e86)
 
 # Perlin noise
+![perlin](https://github.com/cosmcif/raytracer/assets/75504103/ff5ee631-d6ac-4d15-a81f-5635c3a8fbdc)
