@@ -49,6 +49,8 @@ struct Hit {
 
   // Coordinates for computing the texture (texture coordinates).
   glm::vec2 uv;
+
+  glm::vec3 normalShading;
 };
 
 // add bvh box
