@@ -19,7 +19,7 @@
 using namespace std;
 
 constexpr float EPSILON = 0.001f;
-
+const bool WARD = false;
 /**
  Light class
  */
@@ -96,15 +96,37 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
 
             glm::vec3 h =
                     glm::normalize(light_direction + view_direction); // half vector
-            const float specular =
-                    max(0.0f, glm::pow(glm::dot(h, normal), 4 * material.shininess));
 
-            // Attenuation
             const float distance = max(0.1f, distance_from_light);
             const float attenuation = 1.0f / glm::pow(distance, 2);
+            glm::vec3 diffusion = attenuation * light->color * diffuse_color * diffuse;
 
-            color += attenuation * light->color *
-                     (diffuse_color * diffuse + material.specular * specular);
+            glm::vec3 specular_term = glm::vec3(0.0f); // Initialize to zero
+            if (WARD) {
+                if (glm::length(material.specular) > 0.0f) {
+                    // Compute NdotH and other necessary terms
+                    float NdotH = glm::max(0.0f, glm::dot(normal, h));
+
+                    // Microfacet Distribution Function (D)
+                    float alpha = material.shininess;
+                    float exponent = -(1.0f / (2.0f * alpha * alpha * glm::cos(glm::acos(NdotH)) * glm::cos(glm::acos(NdotH))));
+                    float D = glm::exp(exponent) / (4.0f * alpha * alpha * glm::pow(glm::cos(glm::acos(NdotH)), 4.0f));
+
+                    // Geometric Attenuation Factor (G)
+                    float NdotL = glm::max(0.0f, glm::dot(normal, light_direction));
+                    float NdotV = glm::max(0.0f, glm::dot(normal, view_direction));
+                    float G = glm::min(1.0f, glm::min((2.0f * NdotH * NdotV) / NdotH, (2.0f * NdotH * NdotL) / NdotH));
+
+                    // Specular term using Ward Reflectance model
+                    specular_term = material.specular * D * G / (4.0f * NdotL * NdotV);
+                }
+            } else{
+                const float specular = max(0.0f, glm::pow(glm::dot(h, normal), 4 * material.shininess));
+                specular_term = attenuation * light->color *material.specular * specular;
+            }
+            // Attenuation
+
+            color += diffusion + specular_term;
         }
     }
     if (maxBounces > 0) {
@@ -322,12 +344,18 @@ void kyuremScene() {
     blue_copper_specular.specular = glm::vec3(0.6);
     blue_copper_specular.shininess = 100.0;
 
+    Material grey;
+    grey.ambient = glm::vec3(0.07f, 0.07f, 0.07f);
+    grey.diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
+    grey.specular = glm::vec3(0.6);
+    grey.shininess = 100.0;
+
     Material terrain;
     terrain.texture = &perlinTerrain;
 
     Material ice;
     ice.texture = &perlinIceTerrain;
-    ice.refraction = 0.5f;
+    ice.refraction = 0.3f;
     ice.reflection = 0.5f;
     ice.sigma = 2.0f;
 
@@ -350,8 +378,10 @@ void kyuremScene() {
     objects.push_back(new MeshLoader("./meshes/corridoio_leggero.obj",
                                      glm::vec3(0.3, -1, 0), true, terrain));
 
-    objects.push_back(new MeshLoader("./meshes/kyurem_with_normals.obj",
-                                     glm::vec3(-0.5, 0.1, 1), true, blue_copper_specular));
+    objects.push_back(new MeshLoader("./meshes/kyurem_ice.obj",
+                                     glm::vec3(-0.5, 0.1, 1), true, ice));
+    objects.push_back(new MeshLoader("./meshes/kyurem_body.obj",
+                                     glm::vec3(-0.5, 0.1, 1), true, grey));
 
     objects.push_back(new Plane(glm::vec3(0.0f, -1.0f, 14.995f),
                                 glm::vec3(0.0f, 1.0f, 0.0f), true, ice));
