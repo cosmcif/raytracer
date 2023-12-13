@@ -25,3 +25,10 @@ Computer Graphics rendering competition 2023
 
 # Perlin noise
 ![perlin](https://github.com/cosmcif/raytracer/assets/75504103/ff5ee631-d6ac-4d15-a81f-5635c3a8fbdc)
+
+# Reflections
+
+## Basic
+![reflection](https://github.com/cosmcif/raytracer/assets/75504103/c70c72df-0697-4fc0-9a08-05b9142d9552)
+
+## Advanced
