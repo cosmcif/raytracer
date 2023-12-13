@@ -6,8 +6,8 @@
 #include "glm/glm.hpp"
 #include "glm/gtx/transform.hpp"
 #include "glm/trigonometric.hpp"
+#include "glm/gtx/vector_angle.hpp"
 
-#include <ctime>
 #include <iostream>
 #include <omp.h>
 #include <chrono>
@@ -17,6 +17,8 @@
 #include "Image.h"
 
 using namespace std;
+
+constexpr float EPSILON = 0.001f;
 
 /**
  Light class
@@ -35,63 +37,26 @@ vector<Light *> lights; ///< A list of lights in the scene
 glm::vec3 ambient_light(0.7);
 vector<Object *> objects; ///< A list of all objects in the scene
 
-/** Function for computing color of an object according to the Phong Model
- @param point A point belonging to the object for which the color is computer
- @param normal A normal vector the the point
- @param uv Texture coordinates
- @param view_direction A normalized direction from the point to the
- viewer/camera
- @param material A material structure representing the material of the object
-*/
-glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
-                     glm::vec3 view_direction, Material material) {
-    glm::vec3 color(0.0);
-    for (auto &light: lights) {
-        glm::vec3 light_direction = glm::normalize(light->position - point);
-        float r = glm::distance(point, light->position);
-        r = max(r, 0.1f);
-        bool shadow = false;
-        if (glm::dot(normal, view_direction) >= 0) {
-            Ray ray(point + 0.001f * light_direction, light_direction);
-            for (const auto &object: objects) {
-                Hit hit = object->intersect(ray);
-                if (hit.hit && hit.distance < r) {
-                    shadow = true;
-                    break;
-                }
-            }
-        }
-        if (!shadow) {
-            glm::vec3 reflected_direction = glm::reflect(-light_direction, normal);
-            float NdotL = glm::clamp(glm::dot(normal, light_direction), 0.0f, 1.0f);
-            float VdotR =
-                    glm::clamp(glm::dot(view_direction, reflected_direction), 0.0f, 1.0f);
-            glm::vec3 diffuse = material.diffuse * glm::vec3(NdotL);
-            if (material.texture) {
-                diffuse = material.texture(uv) * glm::vec3(NdotL);
-            }
-            glm::vec3 specular =
-                    material.specular * glm::vec3(pow(VdotR, material.shininess));
 
-            //SoftShadow softShadow(light->position);
-            //glm::vec3 shadowFactor = softShadow.computeSoftShadow(point, normal, objects);
+bool is_shadowed(glm::vec3 point, glm::vec3 normal, glm::vec3 direction,
+                 const float distance) {
+    // avoid sending shadow rays towards lights behind the surface
+    if (glm::dot(normal, direction) < 0) {
+        return true;
+    }
 
-            color += light->color * (diffuse + specular) / r / r;
+    // origin of the shadow ray is moved a little to avoid self intersection
+    Ray shadowRay = Ray(point + EPSILON * direction, direction);
+    for (Object *object: objects) {
+        Hit hit = object->intersect(shadowRay);
+        if (hit.hit && hit.distance <= distance) {
+            return true;
         }
     }
-    color += ambient_light * material.ambient;
-
-    color = glm::clamp(color, glm::vec3(0.0), glm::vec3(1.0));
-    return color;
+    return false;
 }
 
-/**
- Functions that computes a color along the ray
- @param ray Ray that should be traced through the scene
- @return Color at the intersection point
- */
-glm::vec3 trace_ray(Ray ray) {
-
+Hit closest(Ray ray) {
     Hit closest_hit{};
 
     closest_hit.hit = false;
@@ -102,17 +67,128 @@ glm::vec3 trace_ray(Ray ray) {
         if (hit.hit && hit.distance < closest_hit.distance)
             closest_hit = hit;
     }
+    return closest_hit;
+}
+
+/** Function for computing color of an object according to the Phong Model
+ @param point A point belonging to the object for which the color is computer
+ @param normal A normal vector the the point
+ @param uv Texture coordinates
+ @param view_direction A normalized direction from the point to the
+ viewer/camera
+ @param material A material structure representing the material of the object
+*/
+glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
+                     glm::vec3 view_direction, Material material,
+                     const int maxBounces) {
+
+    glm::vec3 color(0.0);
+
+    for (Light *light: lights) {
+        glm::vec3 light_direction = glm::normalize(light->position - point);
+        const float distance_from_light = glm::distance(point, light->position);
+
+        if (!is_shadowed(point, normal, light_direction, distance_from_light)) {
+
+            glm::vec3 diffuse_color =
+                    material.texture != nullptr ? material.texture(uv) : material.diffuse;
+            const float diffuse = max(0.0f, glm::dot(light_direction, normal));
+
+            glm::vec3 h =
+                    glm::normalize(light_direction + view_direction); // half vector
+            const float specular =
+                    max(0.0f, glm::pow(glm::dot(h, normal), 4 * material.shininess));
+
+            // Attenuation
+            const float distance = max(0.1f, distance_from_light);
+            const float attenuation = 1.0f / glm::pow(distance, 2);
+
+            color += attenuation * light->color *
+                     (diffuse_color * diffuse + material.specular * specular);
+        }
+    }
+    if (maxBounces > 0) {
+
+        glm::vec3 reflection(0.0f);
+
+        if (material.reflection > 0) {
+            color *= 1 - material.reflection;
+            glm::vec3 reflection_direction = glm::reflect(-view_direction, normal);
+            glm::vec3 reflection_position = point + EPSILON * reflection_direction;
+            Ray reflection_ray = Ray(reflection_position, reflection_direction);
+
+            Hit closest_hit = closest(reflection_ray);
+
+            if (closest_hit.hit) {
+                reflection =
+                        material.reflection *
+                        PhongModel(closest_hit.intersection, closest_hit.normal,
+                                   closest_hit.uv, glm::normalize(-reflection_direction),
+                                   closest_hit.object->getMaterial(), maxBounces - 1);
+            }
+        }
+
+        glm::vec3 refraction(0.0f);
+
+        if (material.refraction > 0) {
+            color *= (1 - material.refraction);
+            const bool is_entering = glm::dot(normal, -view_direction) < 0.0f;
+
+            const float n1 = is_entering ? 1.0f : material.sigma;
+            const float n2 = is_entering ? material.sigma : 1.0f;
+            const float eta = n1 / n2;
+
+            glm::vec3 refraction_direction =
+                    glm::refract(-view_direction, is_entering ? normal : -normal, eta);
+            glm::vec3 refraction_position = point + EPSILON * refraction_direction;
+
+            Ray refraction_ray = Ray(refraction_position, refraction_direction);
+
+            Hit closest_hit = closest(refraction_ray);
+
+            if (closest_hit.hit) {
+                refraction =
+                        material.refraction *
+                        PhongModel(closest_hit.intersection, closest_hit.normal,
+                                   closest_hit.uv, glm::normalize(-refraction_direction),
+                                   closest_hit.object->getMaterial(), maxBounces - 1);
+
+                float O1 = cos(glm::angle(normal, view_direction));
+                float O2 = cos(glm::angle(-normal, refraction_direction));
+
+                float R = 0.5 * (pow((n1 * O1 - n2 * O2) / (n1 * O1 + n2 * O2), 2) +
+                                 pow((n1 * O2 - n2 * O1) / (n1 * O2 + n2 * O1), 2));
+                float T = 1 - R;
+
+                reflection *= R;
+                refraction *= T;
+            }
+        }
+        color += reflection + refraction;
+    }
+
+    color += ambient_light * material.ambient;
+    return color;
+}
+
+/**
+ Functions that computes a color along the ray
+ @param ray Ray that should be traced through the scene
+ @param bounces number of bounces
+ @return Color at the intersection point
+ */
+glm::vec3 trace_ray(Ray ray, int bounces) {
+    Hit closest_hit = closest(ray);
 
     glm::vec3 color(0.0);
 
     if (closest_hit.hit) {
         color = PhongModel(closest_hit.intersection, closest_hit.normal,
                            closest_hit.uv, glm::normalize(-ray.direction),
-                           closest_hit.object->getMaterial());
-    } else {
-        color = glm::vec3(0.0, 0.0, 0.0);
+                           closest_hit.object->getMaterial(), bounces);
     }
-    return color;
+    // clamp the final color to [0,1]
+    return glm::clamp(color, glm::vec3(0.0), glm::vec3(1.0));
 }
 
 /**
@@ -161,9 +237,24 @@ void sceneDefinition() {
     Material ice;
     ice.texture = &perlinIceTerrain;
 
+    Material glass;
+    glass.ambient = glm::vec3(0.0f);
+    glass.diffuse = glm::vec3(0.0f);
+    glass.specular = glm::vec3(0.0f);
+    glass.shininess = 0.0;
+    glass.refraction = 1.0f;
+    glass.reflection = 1.0f;
+    glass.sigma = 2.0f;
 
-    objects.push_back(new MeshLoader("./meshes/bunny.obj",
-                                     glm::vec3(0, -3, 9), true, orange_specular));
+    Material mirror;
+    mirror.ambient = glm::vec3(0.0f);
+    mirror.diffuse = glm::vec3(0.0f);
+    mirror.specular = glm::vec3(0.0f);
+    mirror.shininess = 0.0;
+    mirror.reflection = 1.0f;
+
+    objects.push_back(new MeshLoader("./meshes/crystals.obj",
+                                     glm::vec3(0, 0, 9), true, glass));
 
     // plane in the front
     objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, -0.1f),
@@ -216,19 +307,26 @@ void sceneDefinition() {
     }
     */
 
-    Sphere *redSphere = new Sphere(terrain);
+    auto *redSphere = new Sphere(terrain);
     redSphere->setTransformation(glm::translate(glm::vec3(3, -2, 6)) *
                                  glm::scale(glm::vec3(1)));
     objects.push_back(redSphere);
 
 
-    Sphere *texturedSphere = new Sphere(ice);
+    auto *texturedSphere = new Sphere(ice);
     glm::mat4 texturedMatrix = glm::translate(glm::vec3(-6, 4, 23)) * glm::scale(glm::vec3(7.0));
     texturedSphere->setTransformation(texturedMatrix);
-
     objects.push_back(texturedSphere);
 
+    auto *glassSphere = new Sphere(glass);
+    glm::mat4 glassMatrix = glm::translate(glm::vec3(-4,-1,7)) * glm::scale(glm::vec3(2.0));
+    glassSphere->setTransformation(glassMatrix);
+    objects.push_back(glassSphere);
 
+    auto *mirrorSphere = new Sphere(mirror);
+    glm::mat4 mirrorMatrix = glm::translate(glm::vec3(4, -2, 14)) * glm::scale(glm::vec3(1.0));
+    mirrorSphere->setTransformation(mirrorMatrix);
+    objects.push_back(mirrorSphere);
     lights.push_back(
             new Light(glm::vec3(0, 26, 5), glm::vec3(130.0))); // top light
     lights.push_back(
@@ -301,7 +399,7 @@ int main(int argc, const char *argv[]) {
 
                     Ray ray(origin, direction);
 
-                    pixelColor += trace_ray(ray);
+                    pixelColor += trace_ray(ray, 3);
                 }
 
                 pixelColor /= 4.0f;
