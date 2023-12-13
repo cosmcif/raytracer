@@ -219,7 +219,7 @@ private:
 
 public:
     explicit bvh_node(std::vector<Triangle> &mesh, int a = 0) {
-        int maxSize = 40;
+        int maxSize = 100;
         boundingBox = new BoundingBox(mesh);
 
         if (mesh.size() <= maxSize) {
