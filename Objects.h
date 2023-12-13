@@ -76,6 +76,10 @@ public:
 
             hit.uv.s = (asin(newNormal.y) + M_PI / 2) / M_PI;
             hit.uv.t = (atan2(newNormal.z, newNormal.x) + M_PI) / (2 * M_PI);
+
+            hit.normalShading = glm::normalize(glm::vec3(normalMatrix * glm::vec4(hit.normalShading, 0.0f)));
+
+
         } else {
             hit.hit = false;
         }

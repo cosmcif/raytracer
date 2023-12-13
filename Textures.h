@@ -21,7 +21,7 @@ glm::vec3 perlinTerrain(glm::vec2 uv) {
     float brownG = 0.4f + 0.3f * g; // Scale towards brown-green
     float brownB = 0.2f + 0.2f * b; // Scale towards brown-blue
 
-    return glm::vec3(brownR, brownG, brownB);
+    return {brownR, brownG, brownB};
 }
 
 glm::vec3 perlinIceTerrain(glm::vec2 uv) {
@@ -45,5 +45,37 @@ glm::vec3 perlinIceTerrain(glm::vec2 uv) {
     return result;
 }
 
+class ImageTexture {
+protected:
+    image::BMPMini color;
+    image::BMPMini normal;
+    image::BMPMini ambient_occlusion;
+    image::BMPMini roughness;
+
+private:
+    int width;
+    int height;
+
+    static image::BMPMini load_image(const std::string& image_path) {
+        image::BMPMini bmp;
+        bmp.read(image_path);
+        return bmp;
+    }
+public:
+    glm::vec3 getPixel(const glm::vec2 &uv) const {
+        const size_t x = width * std::fmod(uv.x * horizontalScale_, 1);
+        const size_t y = height - height * std::fmod(uv.y * verticalScale_, 1);
+
+        const size_t index = channels * (width * y + x);
+        return glm::vec3{
+                image.data[index + 2],
+                image.data[index + 1],
+                image.data[index]
+        } / 255.f;
+    }
+};
+
+    }
+};
 
 #endif /* Textures_h */
