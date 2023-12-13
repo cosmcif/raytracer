@@ -236,6 +236,10 @@ void sceneDefinition() {
 
     Material ice;
     ice.texture = &perlinIceTerrain;
+    ice.refraction = 0.5f;
+    ice.reflection = 0.5f;
+    ice.sigma = 2.0f;
+
 
     Material glass;
     glass.ambient = glm::vec3(0.0f);
@@ -253,8 +257,8 @@ void sceneDefinition() {
     mirror.shininess = 0.0;
     mirror.reflection = 1.0f;
 
-    objects.push_back(new MeshLoader("./meshes/crystals.obj",
-                                     glm::vec3(0, 0, 9), true, glass));
+    objects.push_back(new MeshLoader("./meshes/bunny.obj",
+                                     glm::vec3(0, -3, 9), true, glass));
 
     // plane in the front
     objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, -0.1f),
@@ -276,36 +280,6 @@ void sceneDefinition() {
     // plane on top
     objects.push_back(new Plane(glm::vec3(0.0f, 27.0f, 14.995f),
                                 glm::vec3(0.0f, -1.0f, 0.0f), true, blue_copper_specular));
-
-/*
-    for (int x = -20; x <= 20; x += 2) {
-        double z = 20 + sqrt(100 - 0.3075 * x * x);
-
-        if (z < 20.0f || z > 30.0f) {
-            continue;
-        }
-
-        Cone *c = new Cone(blue_copper_specular);
-
-        glm::mat4 transformationMatrix =
-                glm::translate(glm::vec3(x, 5.0f, z)) *
-                glm::rotate(glm::radians(180.0f), glm::vec3(0, 0, 1)) *
-                glm::scale(glm::vec3(5.0f, 20.0f, 1.0f));
-
-        c->setTransformation(transformationMatrix);
-        objects.push_back(c);
-
-        Cone *c2 = new Cone(blue_copper_specular);
-
-        glm::mat4 transformationMatrix2 =
-                glm::translate(glm::vec3(x, 10.0f, z)) *
-                glm::rotate(glm::radians(0.0f), glm::vec3(0, 0, 1)) *
-                glm::scale(glm::vec3(5.0f, 20.0f, 1.0f));
-
-        c2->setTransformation(transformationMatrix2);
-        objects.push_back(c2);
-    }
-    */
 
     auto *redSphere = new Sphere(terrain);
     redSphere->setTransformation(glm::translate(glm::vec3(3, -2, 6)) *
@@ -334,13 +308,75 @@ void sceneDefinition() {
     lights.push_back(new Light(glm::vec3(0, 5, 1), glm::vec3(45.0)));
 }
 
+void kyuremScene() {
+
+    Material orange_specular;
+    orange_specular.diffuse = glm::vec3(1.0f, 0.6f, 0.1f);
+    orange_specular.ambient = glm::vec3(0.01f, 0.03f, 0.03f);
+    orange_specular.specular = glm::vec3(0.5);
+    orange_specular.shininess = 10.0;
+
+    Material blue_copper_specular;
+    blue_copper_specular.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
+    blue_copper_specular.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
+    blue_copper_specular.specular = glm::vec3(0.6);
+    blue_copper_specular.shininess = 100.0;
+
+    Material terrain;
+    terrain.texture = &perlinTerrain;
+
+    Material ice;
+    ice.texture = &perlinIceTerrain;
+    ice.refraction = 0.5f;
+    ice.reflection = 0.5f;
+    ice.sigma = 2.0f;
+
+    Material glass;
+    glass.ambient = glm::vec3(0.0f);
+    glass.diffuse = glm::vec3(0.0f);
+    glass.specular = glm::vec3(0.0f);
+    glass.shininess = 0.0;
+    glass.refraction = 1.0f;
+    glass.reflection = 1.0f;
+    glass.sigma = 2.0f;
+
+    Material mirror;
+    mirror.ambient = glm::vec3(0.0f);
+    mirror.diffuse = glm::vec3(0.0f);
+    mirror.specular = glm::vec3(0.0f);
+    mirror.shininess = 0.0;
+    mirror.reflection = 1.0f;
+
+    objects.push_back(new MeshLoader("./meshes/corridoio_leggero.obj",
+                                     glm::vec3(0.3, -1, 0), true, terrain));
+
+    objects.push_back(new MeshLoader("./meshes/kyurem_with_normals.obj",
+                                     glm::vec3(-0.5, 0.1, 1), true, blue_copper_specular));
+
+    objects.push_back(new Plane(glm::vec3(0.0f, -1.0f, 14.995f),
+                                glm::vec3(0.0f, 1.0f, 0.0f), true, ice));
+
+    lights.push_back(
+            new Light(glm::vec3(12, 26, -5), glm::vec3(130.0))); // top light
+    lights.push_back(new Light(glm::vec3(3, 10, 0), glm::vec3(100.0)));
+
+
+    /*
+     *     glm::vec3 origin(-0.45, 0.5, 1.4); // z smaller value -> it goes forward
+     *     float xTiltAngle = -1.0; // Adjust this value as needed
+     *     float yTiltAngle = 0.4;
+     *     glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+     *     rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+     */
+}
+
 int main(int argc, const char *argv[]) {
     cout << "Running on " << omp_get_max_threads() << " threads\n";
 
     chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
-    int width = /*320 1024 2048*/ 1024; // width of the image
-    int height = /*210 768 1536*/ 768; // height of the image
+    int width = /*320 1024 2048*/ 320; // width of the image
+    int height = /*210 768 1536*/ 210; // height of the image
     float fov = 90; // field of view
 
     sceneDefinition(); // Let's define a scene
@@ -357,8 +393,12 @@ int main(int argc, const char *argv[]) {
     const int tiles_x = (width + tile_size - 1) / tile_size;   // add one tile if width is not a multiple of tile_size
     const int tiles_y = (height + tile_size - 1) / tile_size;  // add one tile if height is not a multiple of tile_size
     const int tile_count = tiles_x * tiles_y;
-    glm::vec3 origin(0, 0, 0);
-
+    glm::vec3 origin(0.0);
+    //glm::vec3 origin(-0.45, 0.5, 1.4); // z smaller value -> it goes forward
+    // float xTiltAngle = -1.0; // Adjust this value as needed
+    // float yTiltAngle = 0.4;
+    // glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+    // rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
 
     float jitterMatrix[4 * 2] = {
             -1.0 / 4.0, 3.0 / 4.0,
@@ -393,9 +433,14 @@ int main(int argc, const char *argv[]) {
                     float dy = Y - (j + jitterY) * s - s / 2;
                     float dz = 1;
 
-                    // Create ray
-                    glm::vec3 direction(dx, dy, dz);
-                    direction = glm::normalize(direction);
+
+                    // Tilt the camera down by adjusting the pitch angle
+                    glm::vec4 direction4(dx, dy, dz, 0.0f);
+                    // direction4 = rotationMatrix * direction4;
+
+                    // Normalize the direction vector
+                    glm::vec3 direction = glm::normalize(glm::vec3(direction4));
+
 
                     Ray ray(origin, direction);
 
