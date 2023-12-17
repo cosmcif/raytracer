@@ -10,10 +10,11 @@ Computer Graphics rendering competition 2023
 - [x] **Stochastic Raytracer - Antialiasing**
 - [ ] **Stochastic Raytracer - Depth-of-Field Effect**
 - [ ] **Stochastic Raytracer - Soft Shadows**
-- [ ] **Photon Mapping**
+- [ ] ~~**Photon Mapping**~~
 - [ ] **Advanced Reflectance Model**
-- [x] **Perlin Noise**
-- [ ] **Participating Media**
+- [x] **Perlin Noise - Textures**
+- [x] **Perlin Noise - Normal maps**
+- [ ] ~~**Participating Media**~~
 - [ ] **Scene**
 
 # Antialiasing
@@ -23,8 +24,11 @@ Computer Graphics rendering competition 2023
 ## Antialiasing implementation
 ![antialiasing](https://github.com/cosmcif/raytracer/assets/75504103/a6443798-2c27-4071-891f-efe593cd9e86)
 
-# Perlin noise
+# Perlin noise - Textures
 ![perlin](https://github.com/cosmcif/raytracer/assets/75504103/ff5ee631-d6ac-4d15-a81f-5635c3a8fbdc)
+
+# Perlin noise - Normal maps
+![perlinnormal4](https://github.com/cosmcif/raytracer/assets/75504103/accaf57d-66b0-4c3e-b95e-c6ce377aea81)
 
 # Reflections
 
