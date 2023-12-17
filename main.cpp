@@ -19,7 +19,7 @@
 using namespace std;
 
 constexpr float EPSILON = 0.001f;
-const bool WARD = false;
+const bool WARD = true;
 /**
  Light class
  */
@@ -78,11 +78,20 @@ Hit closest(Ray ray) {
  viewer/camera
  @param material A material structure representing the material of the object
 */
-glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
+glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec3 normalShading, glm::vec2 uv,
                      glm::vec3 view_direction, Material material,
                      const int maxBounces) {
 
     glm::vec3 color(0.0);
+
+    // flip normal if it is pointing away from the view direction
+    if (glm::dot(normal, view_direction) < 0) {
+        normal = -normal;
+    }
+    // flip shading normal if it is pointing away from the view direction
+    if (glm::dot(normalShading, view_direction) < 0) {
+        normalShading = -normalShading;
+    }
 
     for (Light *light: lights) {
         glm::vec3 light_direction = glm::normalize(light->position - point);
@@ -92,7 +101,7 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
 
             glm::vec3 diffuse_color =
                     material.texture != nullptr ? material.texture(uv) : material.diffuse;
-            const float diffuse = max(0.0f, glm::dot(light_direction, normal));
+            const float diffuse = max(0.0f, glm::dot(light_direction, normalShading));
 
             glm::vec3 h =
                     glm::normalize(light_direction + view_direction); // half vector
@@ -105,7 +114,7 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
             if (WARD) {
                 if (glm::length(material.specular) > 0.0f) {
                     // Compute NdotH and other necessary terms
-                    float NdotH = glm::max(0.0f, glm::dot(normal, h));
+                    float NdotH = glm::max(0.0f, glm::dot(normalShading, h));
 
                     // Microfacet Distribution Function (D)
                     float alpha = material.shininess;
@@ -113,15 +122,15 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
                     float D = glm::exp(exponent) / (4.0f * alpha * alpha * glm::pow(glm::cos(glm::acos(NdotH)), 4.0f));
 
                     // Geometric Attenuation Factor (G)
-                    float NdotL = glm::max(0.0f, glm::dot(normal, light_direction));
-                    float NdotV = glm::max(0.0f, glm::dot(normal, view_direction));
+                    float NdotL = glm::max(0.0f, glm::dot(normalShading, light_direction));
+                    float NdotV = glm::max(0.0f, glm::dot(normalShading, view_direction));
                     float G = glm::min(1.0f, glm::min((2.0f * NdotH * NdotV) / NdotH, (2.0f * NdotH * NdotL) / NdotH));
 
                     // Specular term using Ward Reflectance model
                     specular_term = material.specular * D * G / (4.0f * NdotL * NdotV);
                 }
             } else{
-                const float specular = max(0.0f, glm::pow(glm::dot(h, normal), 4 * material.shininess));
+                const float specular = max(0.0f, glm::pow(glm::dot(h, normalShading), 4 * material.shininess));
                 specular_term = attenuation * light->color *material.specular * specular;
             }
             // Attenuation
@@ -135,7 +144,7 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
 
         if (material.reflection > 0) {
             color *= 1 - material.reflection;
-            glm::vec3 reflection_direction = glm::reflect(-view_direction, normal);
+            glm::vec3 reflection_direction = glm::reflect(-view_direction, normalShading);
             glm::vec3 reflection_position = point + EPSILON * reflection_direction;
             Ray reflection_ray = Ray(reflection_position, reflection_direction);
 
@@ -144,7 +153,7 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
             if (closest_hit.hit) {
                 reflection =
                         material.reflection *
-                        PhongModel(closest_hit.intersection, closest_hit.normal,
+                        PhongModel(closest_hit.intersection, closest_hit.normal, closest_hit.normalShading,
                                    closest_hit.uv, glm::normalize(-reflection_direction),
                                    closest_hit.object->getMaterial(), maxBounces - 1);
             }
@@ -154,14 +163,14 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
 
         if (material.refraction > 0) {
             color *= (1 - material.refraction);
-            const bool is_entering = glm::dot(normal, -view_direction) < 0.0f;
+            const bool is_entering = glm::dot(normalShading, -view_direction) < 0.0f;
 
             const float n1 = is_entering ? 1.0f : material.sigma;
             const float n2 = is_entering ? material.sigma : 1.0f;
             const float eta = n1 / n2;
 
             glm::vec3 refraction_direction =
-                    glm::refract(-view_direction, is_entering ? normal : -normal, eta);
+                    glm::refract(-view_direction, is_entering ? normalShading : -normalShading, eta);
             glm::vec3 refraction_position = point + EPSILON * refraction_direction;
 
             Ray refraction_ray = Ray(refraction_position, refraction_direction);
@@ -171,12 +180,12 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec2 uv,
             if (closest_hit.hit) {
                 refraction =
                         material.refraction *
-                        PhongModel(closest_hit.intersection, closest_hit.normal,
+                        PhongModel(closest_hit.intersection, closest_hit.normal, closest_hit.normalShading,
                                    closest_hit.uv, glm::normalize(-refraction_direction),
                                    closest_hit.object->getMaterial(), maxBounces - 1);
 
-                float O1 = cos(glm::angle(normal, view_direction));
-                float O2 = cos(glm::angle(-normal, refraction_direction));
+                float O1 = cos(glm::angle(normalShading, view_direction));
+                float O2 = cos(glm::angle(-normalShading, refraction_direction));
 
                 float R = 0.5 * (pow((n1 * O1 - n2 * O2) / (n1 * O1 + n2 * O2), 2) +
                                  pow((n1 * O2 - n2 * O1) / (n1 * O2 + n2 * O1), 2));
@@ -205,7 +214,7 @@ glm::vec3 trace_ray(Ray ray, int bounces) {
     glm::vec3 color(0.0);
 
     if (closest_hit.hit) {
-        color = PhongModel(closest_hit.intersection, closest_hit.normal,
+        color = PhongModel(closest_hit.intersection, closest_hit.normal, closest_hit.normalShading,
                            closest_hit.uv, glm::normalize(-ray.direction),
                            closest_hit.object->getMaterial(), bounces);
     }
@@ -256,12 +265,35 @@ void sceneDefinition() {
     Material terrain;
     terrain.texture = &perlinTerrain;
 
+    Material normal;
+    //normal.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
+    //normal.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
+    //normal.texture = &perlinNormal;
+    normal.hasNormalMap = true;
+    normal.normalMap = &perlinNormal;
+    normal.refraction = 1.0f;
+    normal.reflection = 0.5f;
+    normal.sigma = 2.0f;
+
+    Material water;
+    water.hasNormalMap = true;
+    water.normalMap = &perlinWater;
+    water.refraction = 1.0f;
+    water.reflection = 0.5f;
+    water.sigma = 2.0f;
+
     Material ice;
     ice.texture = &perlinIceTerrain;
     ice.refraction = 0.5f;
     ice.reflection = 0.5f;
     ice.sigma = 2.0f;
 
+    Material perla;
+    perla.texture = &opal;
+    perla.shininess = 0.9;
+    perla.refraction = 0.8f;
+    perla.reflection = 0.1f;
+    perla.sigma = 2.0f;
 
     Material glass;
     glass.ambient = glm::vec3(0.0f);
@@ -279,8 +311,8 @@ void sceneDefinition() {
     mirror.shininess = 0.0;
     mirror.reflection = 1.0f;
 
-    objects.push_back(new MeshLoader("./meshes/bunny.obj",
-                                     glm::vec3(0, -3, 9), true, glass));
+    //objects.push_back(new MeshLoader("./meshes/bunny.obj",
+    //                                 glm::vec3(0, -3, 9), true, glass));
 
     // plane in the front
     objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, -0.1f),
@@ -298,7 +330,8 @@ void sceneDefinition() {
 
     // plane on bottom
     objects.push_back(new Plane(glm::vec3(0.0f, -3.0f, 14.995f),
-                                glm::vec3(0.0f, 1.0f, 0.0f), true, ice));
+                                glm::vec3(0.0f, 1.0f, 0.0f), true, blue_copper_specular));
+
     // plane on top
     objects.push_back(new Plane(glm::vec3(0.0f, 27.0f, 14.995f),
                                 glm::vec3(0.0f, -1.0f, 0.0f), true, blue_copper_specular));
@@ -314,13 +347,13 @@ void sceneDefinition() {
     texturedSphere->setTransformation(texturedMatrix);
     objects.push_back(texturedSphere);
 
-    auto *glassSphere = new Sphere(glass);
+    auto *glassSphere = new Sphere(water);
     glm::mat4 glassMatrix = glm::translate(glm::vec3(-4,-1,7)) * glm::scale(glm::vec3(2.0));
     glassSphere->setTransformation(glassMatrix);
     objects.push_back(glassSphere);
 
-    auto *mirrorSphere = new Sphere(mirror);
-    glm::mat4 mirrorMatrix = glm::translate(glm::vec3(4, -2, 14)) * glm::scale(glm::vec3(1.0));
+    auto *mirrorSphere = new Sphere(perla);
+    glm::mat4 mirrorMatrix = glm::translate(glm::vec3(4, 2, 14)) * glm::scale(glm::vec3(1.0));
     mirrorSphere->setTransformation(mirrorMatrix);
     objects.push_back(mirrorSphere);
     lights.push_back(
@@ -331,6 +364,17 @@ void sceneDefinition() {
 }
 
 void kyuremScene() {
+
+    Material normal;
+    //normal.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
+    //normal.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
+    //normal.texture = &perlinNormal;
+    normal.hasNormalMap = true;
+    normal.normalMap = &perlinNormal;
+    normal.refraction = 1.0f;
+    normal.reflection = 0.5f;
+    normal.sigma = 2.0f;
+
 
     Material orange_specular;
     orange_specular.diffuse = glm::vec3(1.0f, 0.6f, 0.1f);
@@ -405,8 +449,8 @@ int main(int argc, const char *argv[]) {
 
     chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
-    int width = /*320 1024 2048*/ 320; // width of the image
-    int height = /*210 768 1536*/ 210; // height of the image
+    int width = /*320 1024 2048*/ 1024; // width of the image
+    int height = /*210 768 1536*/ 768; // height of the image
     float fov = 90; // field of view
 
     sceneDefinition(); // Let's define a scene
