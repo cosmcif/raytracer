@@ -23,13 +23,26 @@ glm::vec3 perlinNormal(glm::vec2 uv) {
     glm::vec3 v_scales = glm::vec3(0.0f, 0.0f, 50.0f);
     glm::vec3 offsets = glm::vec3(0.0f, 0.0f, 50.0f);
 
-    // Generate Perlin noise at the given UV coordinates
     glm::vec3 p = perlinCalculations(uv, u_scales, v_scales, offsets);
     p = 2.0f * p - 1.0f; // to -1,1
-    p = -glm::normalize(p);
+    p = -p;
     p = (p + 1.0f) / 2.0f; // to 0,1
 
-    // Perturb the normal vector based on the Perlin noise value
+    glm::vec3 normal = glm::normalize(glm::vec3(uv, p.z));
+
+    return normal;
+
+}
+glm::vec3 perlinWater(glm::vec2 uv) {
+    glm::vec3 u_scales = glm::vec3(0.0f, 0.0f, 50.f);
+    glm::vec3 v_scales = glm::vec3(0.0f, 0.0f, 50.0f);
+    glm::vec3 offsets = glm::vec3(0.0f, 0.0f, 50.0f);
+
+    glm::vec3 p = perlinCalculations(uv, u_scales, v_scales, offsets);
+    p = 2.0f * p - 1.0f; // to -1,1
+    p = glm::normalize(p);
+    p = (p + 1.0f) / 2.0f; // to 0,1
+
     glm::vec3 normal = glm::normalize(glm::vec3(uv, p.z));
 
     return normal;
