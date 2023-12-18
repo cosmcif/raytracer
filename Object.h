@@ -55,19 +55,6 @@ public:
     normalMatrix = glm::transpose(inverseTransformationMatrix);
   }
 
-  /**
-   * @brief Converts a global ray to a local ray in the object's coordinate
-   * system.
-   * @param ray The global ray to be converted.
-   * @return The local ray in the object's coordinate system.
-   */
-  Ray toLocalRay(Ray &ray) {
-    ray.origin =
-        glm::vec3(inverseTransformationMatrix * glm::vec4(ray.origin, 1.0f));
-    ray.direction = glm::normalize(glm::vec3(inverseTransformationMatrix *
-                                             glm::vec4(ray.direction, 0.0f)));
-    return ray;
-  }
 };
 
 #endif // OBJECT_H

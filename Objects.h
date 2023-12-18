@@ -73,9 +73,28 @@ public:
             glm::vec3 newNormalGlobal =
                     glm::normalize(glm::vec3(normalMatrix * glm::vec4(newNormal, 0.0)));
             hit.normal = newNormalGlobal;
+            hit.normalShading = newNormalGlobal;
 
             hit.uv.s = (asin(newNormal.y) + M_PI / 2) / M_PI;
             hit.uv.t = (atan2(newNormal.z, newNormal.x) + M_PI) / (2 * M_PI);
+
+            if (material.hasNormalMap) {
+                glm::vec3 tangent = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), hit.intersection));
+                glm::vec3 bitangent = glm::normalize(glm::cross(hit.normal, tangent));
+                hit.tangent = tangent;
+                hit.bitangent = bitangent;
+
+                glm::vec3 normal_map = glm::normalize(material.normalMap(hit.uv));
+
+                glm::mat3 TBN = glm::mat3(tangent, bitangent, hit.normal);
+
+                hit.normalShading = glm::normalize(TBN * normal_map);
+                // std::cout << "Normal Shading: (" << hit.normalShading.x << ", " << hit.normalShading.y << ", " << hit.normalShading.z << ")" << std::endl;
+
+            }
+
+
+
         } else {
             hit.hit = false;
         }
@@ -140,6 +159,22 @@ public:
         hit.hit = true;
         hit.uv.x = 0.1 * hit.intersection.x;
         hit.uv.y = 0.1 * hit.intersection.z;
+        hit.normalShading = normal;
+        if (material.hasNormalMap) {
+            glm::vec3 tangent = glm::vec3(0, 0, 1);
+            glm::vec3 bitangent = glm::vec3(1, 0, 0);
+
+            hit.tangent = tangent;
+            hit.bitangent = bitangent;
+
+            glm::vec3 normal_map = glm::normalize(material.normalMap(hit.uv));
+
+            glm::mat3 TBN = glm::mat3(tangent, bitangent, hit.normal);
+
+            hit.normalShading = glm::normalize(TBN * normal_map);
+            // std::cout << "Normal Shading: (" << hit.normalShading.x << ", " << hit.normalShading.y << ", " << hit.normalShading.z << ")" << std::endl;
+
+        }
 
         return hit;
     }
@@ -232,6 +267,7 @@ public:
         glm::vec3 newNormalGlobal =
                 glm::normalize(glm::vec3(normalMatrix * glm::vec4(newNormal, 0.0)));
         hit.normal = newNormalGlobal;
+        hit.normalShading = newNormalGlobal;
 
         hit.uv.s = (asin(newNormal.y) + M_PI / 2) / M_PI;
         hit.uv.t = (atan2(newNormal.z, newNormal.x) + M_PI) / (2 * M_PI);

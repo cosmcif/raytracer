@@ -219,7 +219,7 @@ private:
 
 public:
     explicit bvh_node(std::vector<Triangle> &mesh, int a = 0) {
-        int maxSize = 40;
+        int maxSize = 100;
         boundingBox = new BoundingBox(mesh);
 
         if (mesh.size() <= maxSize) {
@@ -270,17 +270,17 @@ private:
 public:
     MeshLoader(const std::string &filename, glm::vec3 translation, bool hasMaterial,
                Material material = Material()) {
-        std::cout << "in meshloader\n";
+        //std::cout << "in meshloader\n";
 
         if (hasMaterial) {
             this->setMaterial(material);
         }
 
         std::ifstream file(filename);
-        std::cout << "opening file\n";
+        //std::cout << "opening file\n";
 
         if (!file.is_open()) {
-            std::cout << "Could not open file " << filename << std::endl;
+            //std::cout << "Could not open file " << filename << std::endl;
             return;
         }
 
@@ -291,7 +291,7 @@ public:
 
         glm::vec3 minBounds = glm::vec3(INFINITY);
         glm::vec3 maxBounds = glm::vec3(-INFINITY);
-        std::cout << "about to read\n";
+        //std::cout << "about to read\n";
 
         while (getline(file, line)) {
             if (line[1] == 'n') {
@@ -316,7 +316,7 @@ public:
                 maxBounds.z = std::max(maxBounds.z, vertex.z);
 
             } else if (line[0] == 's') {
-                std::cout << "s\n";
+                //std::cout << "s\n";
 
                 // smooth shading
                 sscanf(line.c_str(), "s %d", &smoothShading);
@@ -347,12 +347,12 @@ public:
         }
 
         file.close();
-        std::cout << "file closed\n";
+        //std::cout << "file closed\n";
         boundingBox = BoundingBox(minBounds, maxBounds);
-        std::cout << "bounding box\n";
+        //std::cout << "bounding box\n";
 
         node = new bvh_node(triangles);
-        std::cout << "new node\n";
+        //std::cout << "new node\n";
 
     }
 
