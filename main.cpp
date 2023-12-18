@@ -301,21 +301,30 @@ void sceneDefinition() {
 
 
     Material water;
-    //water.hasNormalMap = true;
-    //water.normalMap = &perlinWater;
-    //water.refraction = 1.0f;
-    //water.reflection = 0.5f;
-    //water.sigma = 2.0f;
+    water.hasNormalMap = true;
+    water.normalMap = &perlinWater;
+    water.refraction = 1.0f;
+    water.reflection = 0.5f;
+    water.sigma = 2.0f;
     water.alpha_x = 0.7f;
     water.alpha_y = 0.3f;
     water.isAnisotropic = true;
     water.shininess = 0.6f;
-    water.specular = glm::vec3(0.2f, 0.8f, 0.8f);
-    water.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
-    water.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
 
 
-
+    Material opaqueIce;
+    opaqueIce.hasNormalMap = true;
+    opaqueIce.normalMap = &perlinIceTerrain;
+    opaqueIce.refraction = 0.5f;
+    opaqueIce.reflection = 0.5f;
+    opaqueIce.sigma = 2.0f;
+    opaqueIce.alpha_x = 0.7f;
+    opaqueIce.alpha_y = 0.3f;
+    opaqueIce.isAnisotropic = true;
+    opaqueIce.shininess = 0.6f;
+    opaqueIce.specular = glm::vec3(0.2f, 0.8f, 0.8f);
+    opaqueIce.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
+    opaqueIce.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
     Material ice;
     ice.texture = &perlinIceTerrain;
     ice.refraction = 0.5f;
