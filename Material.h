@@ -28,6 +28,11 @@ struct Material {
 
     glm::vec3 (*normalMap)(glm::vec2 uv) = nullptr;
 
+    bool isAnisotropic = false;
+    float alpha_x = 0.05f;
+    float alpha_y = 0.16f;
+    // https://cseweb.ucsd.edu/~ravir/6998/papers/p265-ward.pdf
+
 };
 
 #endif /* Material_h */
