@@ -86,6 +86,7 @@ public:
         hit.distance = t;
         hit.object = this;
         hit.hit = true;
+        hit.normalShading = normal;
 
         return hit;
     }
