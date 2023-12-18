@@ -29,6 +29,7 @@ Computer Graphics rendering competition 2023
 
 # Perlin noise - Normal maps
 ![perlinnormal4](https://github.com/cosmcif/raytracer/assets/75504103/accaf57d-66b0-4c3e-b95e-c6ce377aea81)
+![perlinnormal5](https://github.com/cosmcif/raytracer/assets/75504103/177f1f15-2fbf-43fb-b348-0c6d5f242916)
 
 # Reflections
 
