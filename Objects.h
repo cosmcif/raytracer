@@ -81,6 +81,8 @@ public:
             if (material.hasNormalMap) {
                 glm::vec3 tangent = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), hit.intersection));
                 glm::vec3 bitangent = glm::normalize(glm::cross(hit.normal, tangent));
+                hit.tangent = tangent;
+                hit.bitangent = bitangent;
 
                 glm::vec3 normal_map = glm::normalize(material.normalMap(hit.uv));
 
@@ -161,6 +163,9 @@ public:
         if (material.hasNormalMap) {
             glm::vec3 tangent = glm::vec3(0, 0, 1);
             glm::vec3 bitangent = glm::vec3(1, 0, 0);
+
+            hit.tangent = tangent;
+            hit.bitangent = bitangent;
 
             glm::vec3 normal_map = glm::normalize(material.normalMap(hit.uv));
 
