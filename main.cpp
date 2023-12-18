@@ -19,7 +19,7 @@
 using namespace std;
 
 constexpr float EPSILON = 0.001f;
-const bool WARD = true;
+
 /**
  Light class
  */
@@ -80,7 +80,7 @@ Hit closest(Ray ray) {
 */
 glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec3 normalShading, glm::vec2 uv,
                      glm::vec3 view_direction, Material material,
-                     const int maxBounces) {
+                     const int maxBounces, Hit hit) {
 
     glm::vec3 color(0.0);
 
@@ -111,27 +111,51 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec3 normalShading,
             glm::vec3 diffusion = attenuation * light->color * diffuse_color * diffuse;
 
             glm::vec3 specular_term = glm::vec3(0.0f); // Initialize to zero
-            if (WARD) {
-                if (glm::length(material.specular) > 0.0f) {
-                    // Compute NdotH and other necessary terms
-                    float NdotH = glm::max(0.0f, glm::dot(normalShading, h));
+            if (material.isAnisotropic) {
+                //cout << "anis" <<endl;
+                float NdotL = glm::dot(normalShading, light_direction);
+                float NdotV = glm::dot(normalShading, view_direction);
 
-                    // Microfacet Distribution Function (D)
-                    float alpha = material.shininess;
-                    float exponent = -(1.0f / (2.0f * alpha * alpha * glm::cos(glm::acos(NdotH)) * glm::cos(glm::acos(NdotH))));
-                    float D = glm::exp(exponent) / (4.0f * alpha * alpha * glm::pow(glm::cos(glm::acos(NdotH)), 4.0f));
+                if (NdotL > 0 && NdotV > 0) {
+                    float HdotTangent = glm::dot(h, hit.tangent);
+                    float HdotBitangent = glm::dot(h, hit.bitangent);
+                    float HdotN = glm::dot(h, normalShading);
 
-                    // Geometric Attenuation Factor (G)
-                    float NdotL = glm::max(0.0f, glm::dot(normalShading, light_direction));
-                    float NdotV = glm::max(0.0f, glm::dot(normalShading, view_direction));
-                    float G = glm::min(1.0f, glm::min((2.0f * NdotH * NdotV) / NdotH, (2.0f * NdotH * NdotL) / NdotH));
+                    float exponent = -2.0f * (glm::pow((HdotTangent / material.alpha_x), 2.0f)
+                                              * glm::pow((HdotBitangent / material.alpha_y), 2.0f)) / (1 + HdotN);
 
-                    // Specular term using Ward Reflectance model
-                    specular_term = material.specular * D * G / (4.0f * NdotL * NdotV);
+                    specular_term = (material.specular * NdotL * exp(exponent)) /
+                                    (sqrt(NdotL * NdotV) * 4 * glm::pi<float>() * material.alpha_x * material.alpha_y);
                 }
-            } else{
+
+
+                //glm::vec3 TBNnormal = glm::normalize(normalShading);
+                //glm::vec3 X = glm::normalize(glm::cross(normalShading, TBNnormal));
+
+
+                /*glm::vec3 halfway = glm::normalize(light_direction + view_direction);
+
+                // Anisotropic attenuation factors
+                float cos_theta_h = glm::dot(halfway, normalShading);
+                float cos_theta_h_squared = cos_theta_h * cos_theta_h;
+                float sin_theta_h_squared = glm::max(0.0f, 1.0f - cos_theta_h_squared);
+                float tan_theta_h_x_squared = sin_theta_h_squared / (cos_theta_h_squared + material.alpha_x * material.alpha_x);
+                float tan_theta_h_y_squared = sin_theta_h_squared / (cos_theta_h_squared + material.alpha_y * material.alpha_y);
+
+                // Anisotropic specular distribution
+                float exp_x = glm::exp(-tan_theta_h_x_squared / (2.0f * material.alpha_x * material.alpha_x));
+                float exp_y = glm::exp(-tan_theta_h_y_squared / (2.0f * material.alpha_y * material.alpha_y));
+                float D = exp_x * exp_y / (glm::pi<float>() * material.alpha_x * material.alpha_y * cos_theta_h_squared * cos_theta_h_squared);
+
+                // Anisotropic specular reflection
+                float fresnel = glm::pow(1.0f - glm::dot(light_direction, halfway), 5.0f);
+                glm::vec3 specular_reflection = material.specular * fresnel * D / (4.0f * glm::dot(normalShading, light_direction));
+
+                specular_term = attenuation * light->color * specular_reflection;
+                */
+            } else {
                 const float specular = max(0.0f, glm::pow(glm::dot(h, normalShading), 4 * material.shininess));
-                specular_term = attenuation * light->color *material.specular * specular;
+                specular_term = attenuation * light->color * material.specular * specular;
             }
             // Attenuation
 
@@ -155,7 +179,7 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec3 normalShading,
                         material.reflection *
                         PhongModel(closest_hit.intersection, closest_hit.normal, closest_hit.normalShading,
                                    closest_hit.uv, glm::normalize(-reflection_direction),
-                                   closest_hit.object->getMaterial(), maxBounces - 1);
+                                   closest_hit.object->getMaterial(), maxBounces - 1, closest_hit);
             }
         }
 
@@ -182,7 +206,7 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec3 normalShading,
                         material.refraction *
                         PhongModel(closest_hit.intersection, closest_hit.normal, closest_hit.normalShading,
                                    closest_hit.uv, glm::normalize(-refraction_direction),
-                                   closest_hit.object->getMaterial(), maxBounces - 1);
+                                   closest_hit.object->getMaterial(), maxBounces - 1, closest_hit);
 
                 float O1 = cos(glm::angle(normalShading, view_direction));
                 float O2 = cos(glm::angle(-normalShading, refraction_direction));
@@ -216,7 +240,7 @@ glm::vec3 trace_ray(Ray ray, int bounces) {
     if (closest_hit.hit) {
         color = PhongModel(closest_hit.intersection, closest_hit.normal, closest_hit.normalShading,
                            closest_hit.uv, glm::normalize(-ray.direction),
-                           closest_hit.object->getMaterial(), bounces);
+                           closest_hit.object->getMaterial(), bounces, closest_hit);
     }
     // clamp the final color to [0,1]
     return glm::clamp(color, glm::vec3(0.0), glm::vec3(1.0));
@@ -253,7 +277,7 @@ void sceneDefinition() {
     Material orange_specular;
     orange_specular.diffuse = glm::vec3(1.0f, 0.6f, 0.1f);
     orange_specular.ambient = glm::vec3(0.01f, 0.03f, 0.03f);
-    orange_specular.specular = glm::vec3(0.5);
+    orange_specular.specular = glm::vec3(0.33);
     orange_specular.shininess = 10.0;
 
     Material blue_copper_specular;
@@ -275,12 +299,22 @@ void sceneDefinition() {
     normal.reflection = 0.5f;
     normal.sigma = 2.0f;
 
+
     Material water;
-    water.hasNormalMap = true;
-    water.normalMap = &perlinWater;
-    water.refraction = 1.0f;
-    water.reflection = 0.5f;
-    water.sigma = 2.0f;
+    //water.hasNormalMap = true;
+    //water.normalMap = &perlinWater;
+    //water.refraction = 1.0f;
+    //water.reflection = 0.5f;
+    //water.sigma = 2.0f;
+    water.alpha_x = 0.7f;
+    water.alpha_y = 0.3f;
+    water.isAnisotropic = true;
+    water.shininess = 0.6f;
+    water.specular = glm::vec3(0.2f, 0.8f, 0.8f);
+    water.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
+    water.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
+
+
 
     Material ice;
     ice.texture = &perlinIceTerrain;
@@ -319,7 +353,7 @@ void sceneDefinition() {
                                 glm::vec3(0.0f, 0.0f, 1.0f), true, blue_copper_specular));
     // plane in the back
     objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, 30.0f),
-                                glm::vec3(0.0f, 0.0f, -1.0f), true, blue_copper_specular));
+                                glm::vec3(0.0f, 0.0f, -1.0f), true, orange_specular));
 
     // plane on the left
     objects.push_back(new Plane(glm::vec3(-15.0f, 12.0f, 14.995f),
@@ -336,26 +370,32 @@ void sceneDefinition() {
     objects.push_back(new Plane(glm::vec3(0.0f, 27.0f, 14.995f),
                                 glm::vec3(0.0f, -1.0f, 0.0f), true, blue_copper_specular));
 
-    auto *redSphere = new Sphere(terrain);
-    redSphere->setTransformation(glm::translate(glm::vec3(3, -2, 6)) *
+    /*auto *redSphere = new Sphere(terrain);
+    redSphere->setTransformation(glm::translate(glm::vec3(5, -2, 7)) *
                                  glm::scale(glm::vec3(1)));
     objects.push_back(redSphere);
 
+      auto *mirrorSphere = new Sphere(perla);
+    glm::mat4 mirrorMatrix = glm::translate(glm::vec3(4, 2, 14)) * glm::scale(glm::vec3(1.0));
+    mirrorSphere->setTransformation(mirrorMatrix);
+    objects.push_back(mirrorSphere);
 
     auto *texturedSphere = new Sphere(ice);
     glm::mat4 texturedMatrix = glm::translate(glm::vec3(-6, 4, 23)) * glm::scale(glm::vec3(7.0));
     texturedSphere->setTransformation(texturedMatrix);
     objects.push_back(texturedSphere);
+    */
 
     auto *glassSphere = new Sphere(water);
-    glm::mat4 glassMatrix = glm::translate(glm::vec3(-4,-1,7)) * glm::scale(glm::vec3(2.0));
+    glm::mat4 glassMatrix = glm::translate(glm::vec3(-5, -1, 12)) * glm::scale(glm::vec3(2.0));
     glassSphere->setTransformation(glassMatrix);
     objects.push_back(glassSphere);
 
-    auto *mirrorSphere = new Sphere(perla);
-    glm::mat4 mirrorMatrix = glm::translate(glm::vec3(4, 2, 14)) * glm::scale(glm::vec3(1.0));
-    mirrorSphere->setTransformation(mirrorMatrix);
-    objects.push_back(mirrorSphere);
+    auto *glass2Sphere = new Sphere(water);
+    glass2Sphere->setTransformation(glm::translate(glm::vec3(5, -1, 12)) * glm::scale(glm::vec3(2.0)));
+    objects.push_back(glass2Sphere);
+
+
     lights.push_back(
             new Light(glm::vec3(0, 26, 5), glm::vec3(130.0))); // top light
     lights.push_back(
