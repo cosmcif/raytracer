@@ -1,4 +1,3 @@
-
 #ifndef MESHLOADER_H
 #define MESHLOADER_H
 
@@ -12,11 +11,15 @@ private:
     glm::vec3 vertexA;
     glm::vec3 vertexB;
     glm::vec3 vertexC;
+    glm::vec3 normal;
+    bool vertexNormals = false;
     glm::vec3 normalA;
     glm::vec3 normalB;
     glm::vec3 normalC;
-    bool vertexNormals = false;
-    glm::vec3 normal;
+    bool vertexTextures = false;
+    glm::vec2 textureA;
+    glm::vec2 textureB;
+    glm::vec2 textureC;
 
 public:
     glm::vec3 vertices[3];
@@ -27,16 +30,24 @@ public:
     Triangle(glm::vec3 vertexA, glm::vec3 vertexB, glm::vec3 vertexC,
              glm::vec3 normalA = glm::vec3(0.0f),
              glm::vec3 normalB = glm::vec3(0.0f),
-             glm::vec3 normalC = glm::vec3(0.0f))
-            : vertexA(vertexA), vertexB(vertexB), vertexC(vertexC), normalA(normalA),
-              normalB(normalB), normalC(normalC),
+             glm::vec3 normalC = glm::vec3(0.0f),
+             glm::vec2 textureA = glm::vec2(0.0f),
+             glm::vec2 textureB = glm::vec2(0.0f),
+             glm::vec2 textureC = glm::vec2(0.0f))
+            : vertexA(vertexA), vertexB(vertexB), vertexC(vertexC),
+              normalA(normalA), normalB(normalB), normalC(normalC),
+              textureA(textureA), textureB(textureB), textureC(textureC),
               normal(glm::normalize(glm::cross(vertexB - vertexA, vertexC - vertexA))),
               vertices{vertexA, vertexB, vertexC},
             // if one of these is NOT 0, then it's true
             // what all normals are 0? is it even possible??
               vertexNormals(normalA != glm::vec3(0.0f) ||
                             normalB != glm::vec3(0.0f) ||
-                            normalC != glm::vec3(0.0f)) {}
+                            normalC != glm::vec3(0.0f)),
+
+              vertexTextures(textureA != glm::vec2(0.0f) ||
+                             textureB != glm::vec2(0.0f) ||
+                             textureC != glm::vec2(0.0f)) {}
 
     Hit intersect(Ray &ray) override {
         Hit hit{};
@@ -63,21 +74,16 @@ public:
         glm::vec3 w1 = glm::cross(vertexC - td, vertexA - td); //
         glm::vec3 w2 = glm::cross(vertexA - td, vertexB - td); //
 
-        if (glm::dot(normal, w0) < 0 || glm::dot(normal, w1) < 0 ||
-            glm::dot(normal, w2) < 0) {
+        if (glm::dot(normal, w0) < 0 || glm::dot(normal, w1) < 0 || glm::dot(normal, w2) < 0) {
             return hit; // outside the triangle
         }
 
         if (vertexNormals) {
-            float a0 =
-                    glm::length(w0) * (glm::dot(normal, w0) >= 0 ? 1 : -1) * 0.5; //
-            float a1 =
-                    glm::length(w1) * (glm::dot(normal, w1) >= 0 ? 1 : -1) * 0.5; //
-            float a2 =
-                    glm::length(w2) * (glm::dot(normal, w2) >= 0 ? 1 : -1) * 0.5; //
+            float a0 = glm::length(w0) * (glm::dot(normal, w0) >= 0 ? 1 : -1) * 0.5; //
+            float a1 = glm::length(w1) * (glm::dot(normal, w1) >= 0 ? 1 : -1) * 0.5; //
+            float a2 = glm::length(w2) * (glm::dot(normal, w2) >= 0 ? 1 : -1) * 0.5; //
             float totA = a0 + a1 + a2;
-            hit.normal = normalize((a0 / totA) * normalA + (a1 / totA) * normalB +
-                                   (a2 / totA) * normalC);
+            hit.normal = normalize((a0 / totA) * normalA + (a1 / totA) * normalB + (a2 / totA) * normalC);
         } else {
             hit.normal = normal;
         }
@@ -87,6 +93,14 @@ public:
         hit.object = this;
         hit.hit = true;
         hit.normalShading = normal;
+
+        if (vertexTextures) {
+            // find texture coordinates
+            float alpha = glm::dot(normal, w0) / glm::length(w0);
+            float beta = glm::dot(normal, w1) / glm::length(w1);
+            float gamma = glm::dot(normal, w2) / glm::length(w2);
+            hit.uv = alpha * textureA + beta * textureB + gamma * textureC;
+        }
 
         return hit;
     }
@@ -98,11 +112,9 @@ private:
     glm::vec3 maxBounds = glm::vec3(-INFINITY);
 
 public:
-    BoundingBox()
-            : minBounds(glm::vec3(INFINITY)), maxBounds(glm::vec3(-INFINITY)) {}
+    BoundingBox() : minBounds(glm::vec3(INFINITY)), maxBounds(glm::vec3(-INFINITY)) {}
 
-    BoundingBox(glm::vec3 &minBounds, glm::vec3 &maxBounds)
-            : minBounds(minBounds), maxBounds(maxBounds) {}
+    BoundingBox(glm::vec3 &minBounds, glm::vec3 &maxBounds) : minBounds(minBounds), maxBounds(maxBounds) {}
 
     explicit BoundingBox(std::vector<Triangle> &triangles) {
         for (const Triangle &t: triangles) {
@@ -185,8 +197,7 @@ private:
     bvh_node *rightChild;
     std::vector<Triangle> triangles; // Store triangles in leaf nodes
 
-    std::pair<std::vector<Triangle>, std::vector<Triangle>>
-    static splitMesh(std::vector<Triangle> &mesh, int a) {
+    std::pair<std::vector<Triangle>, std::vector<Triangle>> static splitMesh(std::vector<Triangle> &mesh, int a) {
         std::vector<Triangle> left;
         std::vector<Triangle> right;
 
@@ -199,8 +210,7 @@ private:
         c /= mesh.size() * 3;
 
         for (const Triangle &m: mesh) {
-            bool isLeft =
-                    false; // Flag to determine if the triangle belongs to the left side
+            bool isLeft = false; // Flag to determine if the triangle belongs to the left side
 
             for (const glm::vec3 &vertex: m.vertices) {
                 if (vertex[a] < c) {
@@ -228,8 +238,7 @@ public:
             rightChild = nullptr;
             triangles = mesh;
         } else {
-            std::pair<std::vector<Triangle>, std::vector<Triangle>> objs =
-                    splitMesh(mesh, a);
+            std::pair<std::vector<Triangle>, std::vector<Triangle>> objs = splitMesh(mesh, a);
             leftChild = new bvh_node(objs.first, (a + 1) % 3);
             rightChild = new bvh_node(objs.second, (a + 1) % 3);
         }
@@ -264,13 +273,13 @@ class MeshLoader : public Object {
 private:
     std::vector<glm::vec3> vertices;
     std::vector<glm::vec3> normals;
+    std::vector<glm::vec2> textureCoords;
     std::vector<Triangle> triangles;
     BoundingBox boundingBox;
     bvh_node *node;
 
 public:
-    MeshLoader(const std::string &filename, glm::vec3 translation, bool hasMaterial,
-               Material material = Material()) {
+    MeshLoader(const std::string &filename, glm::vec3 translation, bool hasMaterial, Material material = Material()) {
         //std::cout << "in meshloader\n";
 
         if (hasMaterial) {
@@ -287,8 +296,9 @@ public:
 
         std::string line;
 
-        float x, y, z, nx, ny, nz;
+        float x, y, z, nx, ny, nz, tx, ty, tz;
         int smoothShading = 0;
+        bool hasTexture = false;
 
         glm::vec3 minBounds = glm::vec3(INFINITY);
         glm::vec3 maxBounds = glm::vec3(-INFINITY);
@@ -299,14 +309,17 @@ public:
                 // normal
                 sscanf(line.c_str(), "vn %f %f %f", &x, &y, &z);
                 normals.emplace_back(x + translation.x, y + translation.y, z + translation.z);
+            } else if (line[1] == 't') { // texture coordinates
+                sscanf(line.c_str(), "vt %f %f", &x, &y);
+                textureCoords.emplace_back(x + translation.x, y + translation.y);
+                hasTexture = true;
             } else if (line[0] == 'v') {
                 // vertex
                 sscanf(line.c_str(), "v %f %f %f", &x, &y, &z);
                 // vertices.push_back(
                 //     glm::vec3(x + translation.x, y + translation.y, z +
                 //     translation.z));
-                glm::vec3 vertex(x + translation.x, y + translation.y,
-                                 z + translation.z);
+                glm::vec3 vertex(x + translation.x, y + translation.y, z + translation.z);
                 vertices.push_back(vertex);
                 minBounds.x = std::min(minBounds.x, vertex.x);
                 minBounds.y = std::min(minBounds.y, vertex.y);
@@ -318,31 +331,51 @@ public:
 
             } else if (line[0] == 's') {
                 //std::cout << "s\n";
-
                 // smooth shading
                 sscanf(line.c_str(), "s %d", &smoothShading);
             } else if (line[0] == 'f') {
+
                 // face
                 // if smoothShading == 0, there are no normals
                 if (smoothShading == 0) {
+                    /*if (hasTexture) { // likely wont have texture if it doesnt have normals
+                        sscanf(line.c_str(), "f %f %f %f", &x, &y, &z);
+                        Triangle triangle = Triangle(vertices[x - 1], vertices[y - 1], vertices[z - 1]);
+                        if (hasMaterial) {
+                            triangle.setMaterial(material);
+                        }
+                        triangles.push_back(triangle);
+                    } else {*/
                     sscanf(line.c_str(), "f %f %f %f", &x, &y, &z);
-                    Triangle triangle =
-                            Triangle(vertices[x - 1], vertices[y - 1], vertices[z - 1]);
+                    Triangle triangle = Triangle(vertices[x - 1], vertices[y - 1], vertices[z - 1]);
                     if (hasMaterial) {
                         triangle.setMaterial(material);
                     }
                     triangles.push_back(triangle);
-                } else {
-                    sscanf(line.c_str(), "f %f//%f %f//%f %f//%f", &x, &nx, &y, &ny, &z,
-                           &nz);
+                    //}
 
-                    Triangle triangle =
-                            Triangle(vertices[x - 1], vertices[y - 1], vertices[z - 1],
-                                     normals[nx - 1], normals[ny - 1], normals[nz - 1]);
-                    if (hasMaterial) {
-                        triangle.setMaterial(material);
+                } else {
+                    if (hasTexture) {
+                        sscanf(line.c_str(), "f %f/%f/%f %f/%f/%f %f/%f/%f", &x, &tx, &nx, &y, &ty, &ny, &z, &tz, &nz);
+
+                        Triangle triangle = Triangle(vertices[x - 1], vertices[y - 1], vertices[z - 1],
+                                                     normals[nx - 1], normals[ny - 1], normals[nz - 1],
+                                                     textureCoords[tx - 1], textureCoords[ty - 1],
+                                                     textureCoords[tz - 1]);
+                        if (hasMaterial) {
+                            triangle.setMaterial(material);
+                        }
+                        triangles.push_back(triangle);
+                    } else {
+                        sscanf(line.c_str(), "f %f//%f %f//%f %f//%f", &x, &nx, &y, &ny, &z, &nz);
+
+                        Triangle triangle = Triangle(vertices[x - 1], vertices[y - 1], vertices[z - 1], normals[nx - 1],
+                                                     normals[ny - 1], normals[nz - 1]);
+                        if (hasMaterial) {
+                            triangle.setMaterial(material);
+                        }
+                        triangles.push_back(triangle);
                     }
-                    triangles.push_back(triangle);
                 }
             }
         }
