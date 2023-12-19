@@ -133,14 +133,18 @@ glm::vec3 snowTerrain(glm::vec2 uv) {
 }
 
 glm::vec3 qwilfishTexture(glm::vec2 uv) {
-    // Assuming the y-coordinate ranges from -1 to 1
-    float normalizedY = 0.5f * (uv.y + 1.0f);
+    float normalizedY = 0.5f * (uv.y + 3.0f);
 
-    // Interpolate between red (top) and yellow (bottom)
-    glm::vec3 top(0, 0.416, 0.42);    // Red
-    glm::vec3 bottom(1.0f, 1.0f, 0.0f); // Yellow
+    //glm::vec3 blu(0, 0.416, 0.42);
+    //glm::vec3 ylw(1.0f, 1.0f, 0.0f);
 
-    return (1.0f - normalizedY) * top + normalizedY * bottom;
+    //glm::vec3 result = (1.0f - normalizedY) * ylw + normalizedY * blu;
+
+    if (normalizedY<1){
+        return {0.937, 0.922, 0.392}; // yellow
+    } else {
+        return {0, 0.416, 0.42}; // blue
+    }
 }
 
 #endif /* Textures_h */
