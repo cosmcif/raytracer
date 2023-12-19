@@ -422,7 +422,21 @@ void kyuremScene() {
     normal.normalMap = &perlinNormal;
     normal.refraction = 1.0f;
     normal.reflection = 0.5f;
-    normal.sigma = 2.0f;
+    normal.sigma = 1.333f;
+    normal.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
+    normal.ambient = glm::vec3(0.02f, 0.08f, 0.1f);
+    normal.texture = &perlinIceTerrain;
+
+
+    Material water;
+    water.hasNormalMap = true;
+    water.normalMap = &perlinWater;
+    water.refraction = 0.9f;
+    water.sigma = 1.333f;
+    water.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
+    water.texture = &perlinIceTerrain;
+    //water.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
+
 
 
     Material orange_specular;
@@ -497,15 +511,6 @@ void kyuremScene() {
     mirror.shininess = 0.0;
     mirror.reflection = 1.0f;
 
-    Material water;
-    water.hasNormalMap = true;
-    water.normalMap = &perlinWater;
-    water.refraction = 0.9f;
-    water.sigma = 1.333f;
-    water.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
-    water.texture = &perlinIceTerrain;
-    //water.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
-
     Material perla;
     perla.texture = &opal;
     perla.shininess = 0.9;
@@ -570,13 +575,13 @@ void kyuremScene() {
     objects.push_back(kyuremEye);
 
 
-    objects.push_back(new Plane(glm::vec3(-0.39, -0.21, 3),
-                                glm::vec3(0.0f, 0.0f, 1.0f), true, blue_copper_specular));
+    //objects.push_back(new Plane(glm::vec3(-0.39, -0.21, 5),
+    //                            glm::vec3(0.0f, 0.0f, 1.0f), true, blue_copper_specular));
     //lights.push_back(new Light(glm::vec3(-0.65, 15, 0), glm::vec3(100.0)));
 
     lights.push_back(
             new Light(glm::vec3(12, 26, -5), glm::vec3(130.0))); // top light
-    lights.push_back(new Light(glm::vec3(3, 10, 0), glm::vec3(100.0)));
+    lights.push_back(new Light(glm::vec3(3, 10, 0), glm::vec3(100.0f)));
 
 
     /*
@@ -593,8 +598,8 @@ int main(int argc, const char *argv[]) {
 
     chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
-    int width = /*320 1024 2048*/ 320; // width of the image
-    int height = /*210 768 1536*/ 210; // height of the image
+    int width = /*320 1024 2048*/ 1024; // width of the image
+    int height = /*210 768 1536*/ 768; // height of the image
     float fov = 90; // field of view
 
     kyuremScene(); // Let's define a scene
