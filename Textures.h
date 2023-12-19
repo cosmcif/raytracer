@@ -97,8 +97,8 @@ glm::vec3 opal(glm::vec2 uv) {
 glm::vec3 perlinTerrain(glm::vec2 uv) {
     glm::vec3 p = perlinCalculations(uv, glm::vec3(30.0f), glm::vec3(30.0f), glm::vec3(0.0f));
 
-    float r = 0.6f + 0.4f * p.r;
-    float g = 0.4f + 0.3f * p.g;
+    float r = 0.2f + 0.4f * p.r; //0.6
+    float g = 0.2f + 0.3f * p.g; //0.4
     float b = 0.2f + 0.2f * p.b;
 
     return {r, g, b};
@@ -118,5 +118,29 @@ glm::vec3 perlinIceTerrain(glm::vec2 uv) {
     return {r, g, b};
 }
 
+glm::vec3 snowTerrain(glm::vec2 uv) {
+
+    glm::vec3 p = perlinCalculations(uv, glm::vec3(10.0f), glm::vec3(10.0f), glm::vec3(10.0f));
+
+    glm::vec3 col1_rgb = glm::vec3(0.722, 0.961, 0.937);
+    glm::vec3 col2_rgb = glm::vec3(0.212, 0.51, 0.62);
+
+    float r = p.r * col1_rgb.r + ((1.0f - p.r) * col2_rgb.r);
+    float g = p.g * col1_rgb.g + ((1.0f - p.g) * col2_rgb.g);
+    float b = p.b * col1_rgb.b + ((1.0f - p.b) * col2_rgb.b);
+
+    return {r, g, b};
+}
+
+glm::vec3 qwilfishTexture(glm::vec2 uv) {
+    // Assuming the y-coordinate ranges from -1 to 1
+    float normalizedY = 0.5f * (uv.y + 1.0f);
+
+    // Interpolate between red (top) and yellow (bottom)
+    glm::vec3 top(0, 0.416, 0.42);    // Red
+    glm::vec3 bottom(1.0f, 1.0f, 0.0f); // Yellow
+
+    return (1.0f - normalizedY) * top + normalizedY * bottom;
+}
 
 #endif /* Textures_h */
