@@ -37,8 +37,3 @@ Computer Graphics rendering competition 2023
 ![reflection](https://github.com/cosmcif/raytracer/assets/75504103/c70c72df-0697-4fc0-9a08-05b9142d9552)
 
 ## Advanced
-**Anisotropy enabled**
-![ice2true](https://github.com/cosmcif/raytracer/assets/75504103/b93ac4f7-af42-4abc-8460-e547a4b4ee6e)
-**Anisotropy disabled**
-![ice2false](https://github.com/cosmcif/raytracer/assets/75504103/b75f74cd-7e72-4392-ace0-0328419c769a)
-

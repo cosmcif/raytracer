@@ -112,7 +112,6 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec3 normalShading,
 
             glm::vec3 specular_term = glm::vec3(0.0f); // Initialize to zero
             if (material.isAnisotropic) {
-                //cout << "anis" <<endl;
                 float NdotL = glm::dot(normalShading, light_direction);
                 float NdotV = glm::dot(normalShading, view_direction);
 
@@ -127,32 +126,6 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec3 normalShading,
                     specular_term = (material.specular * NdotL * exp(exponent)) /
                                     (sqrt(NdotL * NdotV) * 4 * glm::pi<float>() * material.alpha_x * material.alpha_y);
                 }
-
-
-                //glm::vec3 TBNnormal = glm::normalize(normalShading);
-                //glm::vec3 X = glm::normalize(glm::cross(normalShading, TBNnormal));
-
-
-                /*glm::vec3 halfway = glm::normalize(light_direction + view_direction);
-
-                // Anisotropic attenuation factors
-                float cos_theta_h = glm::dot(halfway, normalShading);
-                float cos_theta_h_squared = cos_theta_h * cos_theta_h;
-                float sin_theta_h_squared = glm::max(0.0f, 1.0f - cos_theta_h_squared);
-                float tan_theta_h_x_squared = sin_theta_h_squared / (cos_theta_h_squared + material.alpha_x * material.alpha_x);
-                float tan_theta_h_y_squared = sin_theta_h_squared / (cos_theta_h_squared + material.alpha_y * material.alpha_y);
-
-                // Anisotropic specular distribution
-                float exp_x = glm::exp(-tan_theta_h_x_squared / (2.0f * material.alpha_x * material.alpha_x));
-                float exp_y = glm::exp(-tan_theta_h_y_squared / (2.0f * material.alpha_y * material.alpha_y));
-                float D = exp_x * exp_y / (glm::pi<float>() * material.alpha_x * material.alpha_y * cos_theta_h_squared * cos_theta_h_squared);
-
-                // Anisotropic specular reflection
-                float fresnel = glm::pow(1.0f - glm::dot(light_direction, halfway), 5.0f);
-                glm::vec3 specular_reflection = material.specular * fresnel * D / (4.0f * glm::dot(normalShading, light_direction));
-
-                specular_term = attenuation * light->color * specular_reflection;
-                */
             } else {
                 const float specular = max(0.0f, glm::pow(glm::dot(h, normalShading), 4 * material.shininess));
                 specular_term = attenuation * light->color * material.specular * specular;
@@ -318,8 +291,8 @@ void sceneDefinition() {
     opaqueIce.refraction = 0.5f;
     opaqueIce.reflection = 0.5f;
     opaqueIce.sigma = 2.0f;
-    opaqueIce.alpha_x = 0.7f;
-    opaqueIce.alpha_y = 0.3f;
+    opaqueIce.alpha_x = 0.1f;
+    opaqueIce.alpha_y = 0.8f;
     opaqueIce.isAnisotropic = true;
     opaqueIce.shininess = 0.6f;
     opaqueIce.specular = glm::vec3(0.2f, 0.8f, 0.8f);
@@ -395,13 +368,13 @@ void sceneDefinition() {
     objects.push_back(texturedSphere);
     */
 
-    auto *glassSphere = new Sphere(water);
-    glm::mat4 glassMatrix = glm::translate(glm::vec3(-5, -1, 12)) * glm::scale(glm::vec3(2.0));
+    auto *glassSphere = new Sphere(orange_specular);
+    glm::mat4 glassMatrix = glm::translate(glm::vec3(-5, -1, 8)) * glm::scale(glm::vec3(2.0));
     glassSphere->setTransformation(glassMatrix);
     objects.push_back(glassSphere);
 
-    auto *glass2Sphere = new Sphere(water);
-    glass2Sphere->setTransformation(glm::translate(glm::vec3(5, -1, 12)) * glm::scale(glm::vec3(2.0)));
+    auto *glass2Sphere = new Sphere(orange_specular);
+    glass2Sphere->setTransformation(glm::translate(glm::vec3(5, -1, 14)) * glm::scale(glm::vec3(2.0)));
     objects.push_back(glass2Sphere);
 
 
@@ -422,7 +395,21 @@ void kyuremScene() {
     normal.normalMap = &perlinNormal;
     normal.refraction = 1.0f;
     normal.reflection = 0.5f;
-    normal.sigma = 2.0f;
+    normal.sigma = 1.333f;
+    normal.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
+    normal.ambient = glm::vec3(0.02f, 0.08f, 0.1f);
+    normal.texture = &perlinIceTerrain;
+
+
+    Material water;
+    water.hasNormalMap = true;
+    water.normalMap = &perlinWater;
+    water.refraction = 0.9f;
+    water.sigma = 1.333f;
+    water.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
+    water.texture = &perlinIceTerrain;
+    //water.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
+
 
 
     Material orange_specular;
@@ -430,6 +417,16 @@ void kyuremScene() {
     orange_specular.ambient = glm::vec3(0.01f, 0.03f, 0.03f);
     orange_specular.specular = glm::vec3(0.5);
     orange_specular.shininess = 10.0;
+
+    Material eyeColor;
+    eyeColor.diffuse = glm::vec3(1.0f, 1.0f, 0.1f);
+    eyeColor.ambient = glm::vec3(1.0f, 1.0f, 0.1f);
+    eyeColor.specular = glm::vec3(0.5);
+    eyeColor.shininess = 100.0;
+
+
+    Material dark;
+    dark.diffuse = glm::vec3(0.00f, 0.00f, 0.009f);
 
     Material blue_copper_specular;
     blue_copper_specular.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
@@ -439,9 +436,10 @@ void kyuremScene() {
 
     Material grey;
     grey.ambient = glm::vec3(0.07f, 0.07f, 0.07f);
-    grey.diffuse = glm::vec3(0.7f, 0.7f, 0.7f);
-    grey.specular = glm::vec3(0.6);
-    grey.shininess = 100.0;
+    grey.diffuse = glm::vec3(0.3f, 0.3f, 0.3f);
+    grey.specular = glm::vec3(0.3);
+    grey.shininess = 10.0;
+    // grey.reflection = 0.1f;
 
     Material terrain;
     terrain.texture = &perlinTerrain;
@@ -451,11 +449,29 @@ void kyuremScene() {
     ice.refraction = 0.3f;
     ice.reflection = 0.5f;
     ice.sigma = 2.0f;
+    ice.hasNormalMap = true;
+    ice.normalMap = &perlinIceTerrain;
+    ice.ambient = glm::vec3(0.271, 0.373, 0.388);
+    // 0.773, 0.878, 0.894
+    // 0.553, 0.655, 0.671
+    // 0.373, 0.482, 0.502
+    // 0.271, 0.373, 0.388
+
+    Material iceOpaque;
+    iceOpaque.texture = &snowTerrain;
+    iceOpaque.reflection = 0.02f;
+
+    Material crystal;
+    // crystal.texture = &perlinIceTerrain;
+    crystal.sigma = 2.4f; //https://www.gemsociety.org/article/table-refractive-index-double-refraction-gems/
+    crystal.refraction = 1.0f;
+    crystal.reflection = 0.5f;
+    crystal.ambient = glm::vec3(0.1f, 0.2f, 0.3f);
 
     Material glass;
-    glass.ambient = glm::vec3(0.0f);
-    glass.diffuse = glm::vec3(0.0f);
-    glass.specular = glm::vec3(0.0f);
+    glass.ambient = glm::vec3(0.03, 0.04, 0.05);
+    glass.diffuse = glm::vec3(0.3, 0.4, 0.5);
+    glass.specular = glm::vec3(0.03, 0.04, 0.05);
     glass.shininess = 0.0;
     glass.refraction = 1.0f;
     glass.reflection = 1.0f;
@@ -468,20 +484,91 @@ void kyuremScene() {
     mirror.shininess = 0.0;
     mirror.reflection = 1.0f;
 
-    objects.push_back(new MeshLoader("./meshes/corridoio_leggero.obj",
-                                     glm::vec3(0.3, -1, 0), true, terrain));
+    Material perla;
+    perla.texture = &opal;
+    perla.shininess = 0.9;
+    perla.reflection = 0.1f;
 
-    objects.push_back(new MeshLoader("./meshes/kyurem_ice.obj",
-                                     glm::vec3(-0.5, 0.1, 1), true, ice));
-    objects.push_back(new MeshLoader("./meshes/kyurem_body.obj",
-                                     glm::vec3(-0.5, 0.1, 1), true, grey));
+    Material qwilfish;
+    qwilfish.texture = &qwilfishTexture;
 
-    objects.push_back(new Plane(glm::vec3(0.0f, -1.0f, 14.995f),
-                                glm::vec3(0.0f, 1.0f, 0.0f), true, ice));
+    Material qwilfishMouth;
+    qwilfishMouth.ambient = glm::vec3(0.0f);
+    qwilfishMouth.diffuse = glm::vec3(0.941, 0.608, 0.647);
+    qwilfishMouth.shininess = 5.0;
+
+    Material qwilfishEyes;
+    qwilfishEyes.ambient = glm::vec3(0.0f);
+    qwilfishEyes.diffuse = glm::vec3(1, 1, 1);
+    qwilfishEyes.shininess = 5.0;
+
+    objects.push_back(new MeshLoader("./meshes/piattaforma.obj",
+                                     glm::vec3(0.3, -1.5, 0), true, iceOpaque));
+    objects.push_back(new MeshLoader("./meshes/pietre.obj",
+                                     glm::vec3(0.3, -1.5, 0), true, terrain));
+
+
+    objects.push_back(new MeshLoader("./meshes/kyurem_ice_uv.obj",
+                                     glm::vec3(-0.5, -0.425, 1.1), true, ice));
+    objects.push_back(new MeshLoader("./meshes/kyurem_body_uv.obj",
+                                     glm::vec3(-0.5, -0.425, 1.1), true, grey));
+
+    objects.push_back(new MeshLoader("./meshes/crystal_small_uv.obj",
+                                     glm::vec3(-0.29, -0.39, 0.81), true, crystal));
+    objects.push_back(new MeshLoader("./meshes/crystal_small_uv.obj",
+                                     glm::vec3(-0.36, -0.39, 1), true, crystal));
+    objects.push_back(new MeshLoader("./meshes/crystal_big_uv.obj",
+                                     glm::vec3(-0.34, -0.388, 0.77), true, crystal));
+    objects.push_back(new MeshLoader("./meshes/crystal_big_uv.obj",
+                                     glm::vec3(-0.65, -0.388, 1.3), true, crystal));
+    objects.push_back(new MeshLoader("./meshes/crystal_big_uv.obj",
+                                     glm::vec3(-0.59, -0.38, 1.34), true, crystal));
+
+    objects.push_back(new MeshLoader("./meshes/crystal_big_uv.obj",
+                                     glm::vec3(-0.37, -0.388, 1.27), true, crystal));
+    objects.push_back(new MeshLoader("./meshes/crystal_small_uv.obj",
+                                     glm::vec3(-0.36, -0.4, 1.32), true, crystal));
+
+    objects.push_back(new MeshLoader("./meshes/qwilfish_body.obj",
+                                     glm::vec3(-1.5, -0.65, 1.1), true, qwilfish));
+    objects.push_back(new MeshLoader("./meshes/qwilfish_eyes.obj",
+                                     glm::vec3(-1.5, -0.65, 1.1), true, qwilfishEyes));
+    objects.push_back(new MeshLoader("./meshes/qwilfish_mouth.obj",
+                                     glm::vec3(-1.5, -0.65, 1.1), true, qwilfishMouth));
+
+
+    objects.push_back(new MeshLoader("./meshes/crystalpillar.obj",
+                                     glm::vec3(-0.56, -0.24, 1.46), true, crystal));
+    objects.push_back(new MeshLoader("./meshes/crystalpillar.obj",
+                                     glm::vec3(-0.555, -0.26, 1.43), true, crystal));
+    objects.push_back(new MeshLoader("./meshes/crystalpillar.obj",
+                                     glm::vec3(-0.55, -0.24, 1.4), true, crystal));
+
+
+    objects.push_back(new Plane(glm::vec3(0.0f, -0.6f, 14.995f),
+                                glm::vec3(0.0f, 1.0f, 0.0f), true, normal));
+
+    objects.push_back(new Plane(glm::vec3(0.0f, -0.61f, 14.995f),
+                                glm::vec3(0.0f, 1.0f, 0.0f), true, water));
+
+
+    auto *kyuremEye = new Sphere(eyeColor);
+    kyuremEye->setTransformation(glm::translate(glm::vec3(-0.491, -0.281, 1.353)) * glm::scale(glm::vec3(0.003)));
+    objects.push_back(kyuremEye);
+
+    auto *glassSphere = new Sphere(normal);
+    glassSphere->setTransformation(glm::translate(glm::vec3(-0.53, -0.38, 1.42)) * glm::scale(glm::vec3(0.03)));
+    objects.push_back(glassSphere);
+    //lights.push_back(new Light(glm::vec3(-0.48, -0.39, 1.4), glm::vec3(1.0)));
+
+    //objects.push_back(new Plane(glm::vec3(-0.39, -0.21, 5),
+    //                            glm::vec3(0.0f, 0.0f, 1.0f), true, blue_copper_specular));
+    //lights.push_back(new Light(glm::vec3(-0.65, 15, 0), glm::vec3(100.0)));
 
     lights.push_back(
-            new Light(glm::vec3(12, 26, -5), glm::vec3(130.0))); // top light
-    lights.push_back(new Light(glm::vec3(3, 10, 0), glm::vec3(100.0)));
+            new Light(glm::vec3(12, 26, -5), glm::vec3(120.0))); // top light
+    lights.push_back(new Light(glm::vec3(-3, 10, 0), glm::vec3(100.0f)));
+    lights.push_back(new Light(glm::vec3(0, 0, 2.5), glm::vec3(0.5f)));
 
 
     /*
@@ -498,12 +585,14 @@ int main(int argc, const char *argv[]) {
 
     chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
-    int width = /*320 1024 2048*/ 1024; // width of the image
-    int height = /*210 768 1536*/ 768; // height of the image
+    int width = /*320 1024 2048*/ 320/2; // width of the image
+    int height = /*210 768 1536*/ 210/2; // height of the image
     float fov = 90; // field of view
 
-    sceneDefinition(); // Let's define a scene
+    //sceneDefinition();
+    kyuremScene(); // Let's define a scene
 
+    cout << "Scene was loaded succesfully\n";
     Image image(width, height); // Create an image where we will store the result
 
     const float s = 2 * tan(0.5 * fov / 180 * M_PI) / width;
@@ -516,12 +605,25 @@ int main(int argc, const char *argv[]) {
     const int tiles_x = (width + tile_size - 1) / tile_size;   // add one tile if width is not a multiple of tile_size
     const int tiles_y = (height + tile_size - 1) / tile_size;  // add one tile if height is not a multiple of tile_size
     const int tile_count = tiles_x * tiles_y;
-    glm::vec3 origin(0.0);
-    //glm::vec3 origin(-0.45, 0.5, 1.4); // z smaller value -> it goes forward
-    // float xTiltAngle = -1.0; // Adjust this value as needed
-    // float yTiltAngle = 0.4;
-    // glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-    // rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+    //glm::vec3 origin(0.0);
+    glm::vec3 origin(-0.45, -0.21, 1.52); // z smaller value -> it goes forward
+    float xTiltAngle = -0.75; // Adjust this value as needed
+
+    //glm::vec3 origin(-0.39, -0.21, 1.5); // z smaller value -> it goes forward
+    //float xTiltAngle = -0.75; // Adjust this value as needed
+
+    // topdown angle
+    // glm::vec3 origin(-0.45, 0.5, 1.4);
+    // glm::vec3 origin(-0.4, 0, 1.5);
+    // float xTiltAngle = -1.0;
+
+    // debug angle
+    //glm::vec3 origin(-0.45, 0, 1.8);
+    //float xTiltAngle = -0.4;
+
+    float yTiltAngle = 0.4;
+    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+    rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
 
     float jitterMatrix[4 * 2] = {
             -1.0 / 4.0, 3.0 / 4.0,
@@ -558,8 +660,8 @@ int main(int argc, const char *argv[]) {
 
 
                     // Tilt the camera down by adjusting the pitch angle
-                    glm::vec4 direction4(dx, dy, dz, 0.0f);
-                    // direction4 = rotationMatrix * direction4;
+                    glm::vec4 direction4(dx, dy, -dz, 0.0f);
+                    direction4 = rotationMatrix * direction4;
 
                     // Normalize the direction vector
                     glm::vec3 direction = glm::normalize(glm::vec3(direction4));
