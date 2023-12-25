@@ -1,5 +1,7 @@
 # Raytracer 
-Computer Graphics rendering competition 2023
+Computer Graphics rendering competition 2023 (we won :p) 
+
+All results [here](https://www.pdf.inf.usi.ch/rendering_competition/2023/).
 
 # Authors
 - Sofia d'Atri
@@ -8,14 +10,13 @@ Computer Graphics rendering competition 2023
 # Features
 
 - [x] **Stochastic Raytracer - Antialiasing**
-- [ ] **Stochastic Raytracer - Depth-of-Field Effect**
-- [ ] **Stochastic Raytracer - Soft Shadows**
-- [ ] ~~**Photon Mapping**~~
 - [x] **Advanced Reflectance Model**
 - [x] **Perlin Noise - Textures**
 - [x] **Perlin Noise - Normal maps**
-- [ ] ~~**Participating Media**~~
-- [ ] **Scene**
+- [x] **Scene**
+      
+# Final scene
+![FINAL](https://github.com/cosmcif/raytracer/assets/75504103/d77fe0a4-1197-4919-a06a-1219e2d8bb99)
 
 # Antialiasing
 ## Plain
