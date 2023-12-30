@@ -538,11 +538,11 @@ void kyuremScene() {
 
 
     objects.push_back(new MeshLoader("./meshes/crystalpillar.obj",
-                                     glm::vec3(-0.56, -0.24, 1.46), true, crystal));
+                                     glm::vec3(-0.565, -0.225, 1.46), true, crystal));
     objects.push_back(new MeshLoader("./meshes/crystalpillar.obj",
-                                     glm::vec3(-0.555, -0.26, 1.43), true, crystal));
+                                     glm::vec3(-0.555, -0.255, 1.425), true, crystal));
     objects.push_back(new MeshLoader("./meshes/crystalpillar.obj",
-                                     glm::vec3(-0.55, -0.24, 1.4), true, crystal));
+                                     glm::vec3(-0.545, -0.235, 1.39), true, crystal));
 
 
     objects.push_back(new Plane(glm::vec3(0.0f, -0.6f, 14.995f),
@@ -566,9 +566,10 @@ void kyuremScene() {
     //lights.push_back(new Light(glm::vec3(-0.65, 15, 0), glm::vec3(100.0)));
 
     lights.push_back(
-            new Light(glm::vec3(12, 26, -5), glm::vec3(120.0))); // top light
-    lights.push_back(new Light(glm::vec3(-3, 10, 0), glm::vec3(100.0f)));
-    lights.push_back(new Light(glm::vec3(0, 0, 2.5), glm::vec3(0.5f)));
+            new Light(glm::vec3(11, 25, -5), glm::vec3(120.0))); // top light
+    lights.push_back(new Light(glm::vec3(-6, 9, 0), glm::vec3(100.0f)));
+    lights.push_back(new Light(glm::vec3(0, -0.1, 2.5), glm::vec3(0.5f)));
+    lights.push_back(new Light(glm::vec3(-0.7, 0.1, 1.2), glm::vec3(0.05f)));
 
 
     /*
@@ -585,8 +586,8 @@ int main(int argc, const char *argv[]) {
 
     chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
-    int width = /*320 1024 2048*/ 320/2; // width of the image
-    int height = /*210 768 1536*/ 210/2; // height of the image
+    int width = /*320 1024 2048*/ 2048; // width of the image
+    int height = /*210 768 1536*/ 1536; // height of the image
     float fov = 90; // field of view
 
     //sceneDefinition();
