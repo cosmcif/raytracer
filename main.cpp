@@ -15,6 +15,7 @@
 #include "Objects.h"
 #include "MeshLoader.h"
 #include "Image.h"
+#include "ImageTexture.h"
 
 using namespace std;
 
