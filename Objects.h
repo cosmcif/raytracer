@@ -90,7 +90,6 @@ public:
 
                 hit.normalShading = glm::normalize(TBN * normal_map);
                 // std::cout << "Normal Shading: (" << hit.normalShading.x << ", " << hit.normalShading.y << ", " << hit.normalShading.z << ")" << std::endl;
-
             }
 
 

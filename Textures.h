@@ -6,6 +6,7 @@
 #include "glm/fwd.hpp"
 #include "glm/glm.hpp"
 #include "glm/gtc/noise.hpp"
+#include "bmpmini.hpp"
 
 
 glm::vec3 perlinCalculations(glm::vec2 uv, glm::vec3 u_scales, glm::vec3 v_scales, glm::vec3 offsets) {
@@ -146,4 +147,49 @@ glm::vec3 qwilfishTexture(glm::vec2 uv) {
     }
 }
 
+
+static image::BMPMini loadImage(const std::string &imagePath) {
+    image::BMPMini bmp;
+    bmp.read(imagePath);
+    return bmp;
+}
+void loadTexture(const std::string &filename, image::BMPMini &texture, const std::string &path) {
+    texture = loadImage(path + "/" + filename);
+}
+
+float horizontalScale = 1.0f;
+float verticalScale = 1.0f;
+glm::vec3 pixelAt(const image::ImageView &image, const glm::vec2 &uv) {
+    const uint16_t x = static_cast<uint16_t>(image.width * std::fmod(uv.x * horizontalScale, 1));
+    const uint16_t y = static_cast<uint16_t>(image.height - image.height * std::fmod(uv.y * verticalScale, 1));
+
+    const uint32_t index = image.channels * (image.width * y + x);
+    return {
+            image.data[index + 2] / 255.f,
+            image.data[index + 1] / 255.f,
+            image.data[index] / 255.f
+    };
+}
+
+image::BMPMini color = loadImage("./textures/basecolor.bmp");
+image::BMPMini normal = loadImage("./textures/normal.bmp");
+image::BMPMini ambientOcclusion = loadImage("./textures/ambientOcclusion.bmp");
+image::BMPMini roughness = loadImage("./textures/roughness.bmp");
+
+glm::vec3 colorAt(glm::vec2 uv) {
+
+    return pixelAt(color.get(), uv);
+}
+
+glm::vec3 normalAt(glm::vec2 uv) {
+    return pixelAt(normal.get(), uv);
+}
+
+float_t ambientOcclusionAt(glm::vec2 uv) {
+    return pixelAt(ambientOcclusion.get(), uv).r;
+}
+
+float_t roughnessAt(glm::vec2 uv) {
+    return pixelAt(roughness.get(), uv).r;
+}
 #endif /* Textures_h */
