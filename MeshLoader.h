@@ -6,6 +6,24 @@
 #include <fstream>
 #include <vector>
 
+
+/*
+ * This file contains materials from the bonus exercises, which have been
+ * updated to reflect the competition's needs.
+ *
+ * FEAT: MESH LOADER
+ * The mesh loader checks for vertices, texture vertices and normal
+ * vertices when loading the .obj mesh.
+ * Since for the competition we needed texture vertices only when normal
+ * vertices were also present, it doesn't check for the case where texture
+ * vertices are present but normal vertices aren't.
+ *
+ * FEAT: BOUNDING VOLUME HIERARCHY (BVH)
+ * This version of the code was not submitted for the bonus because we
+ * couldn't find and fix an error in the code well past the deadline.
+ * We decided to fix it for the competition.
+ **/
+
 class Triangle : public Object {
 private:
     glm::vec3 vertexA;
@@ -40,7 +58,7 @@ public:
               normal(glm::normalize(glm::cross(vertexB - vertexA, vertexC - vertexA))),
               vertices{vertexA, vertexB, vertexC},
             // if one of these is NOT 0, then it's true
-            // what all normals are 0? is it even possible??
+            // what if all normals are 0? is it even possible??
               vertexNormals(normalA != glm::vec3(0.0f) ||
                             normalB != glm::vec3(0.0f) ||
                             normalC != glm::vec3(0.0f)),
@@ -195,7 +213,7 @@ private:
     BoundingBox *boundingBox;
     bvh_node *leftChild;
     bvh_node *rightChild;
-    std::vector<Triangle> triangles; // Store triangles in leaf nodes
+    std::vector<Triangle> triangles; // store triangles in leaf nodes
 
     std::pair<std::vector<Triangle>, std::vector<Triangle>> static splitMesh(std::vector<Triangle> &mesh, int a) {
         std::vector<Triangle> left;
@@ -210,11 +228,11 @@ private:
         c /= mesh.size() * 3;
 
         for (const Triangle &m: mesh) {
-            bool isLeft = false; // Flag to determine if the triangle belongs to the left side
+            bool isLeft = false; // determine if triangle belongs to left side
 
             for (const glm::vec3 &vertex: m.vertices) {
                 if (vertex[a] < c) {
-                    isLeft = true; // At least one vertex is on the left side
+                    isLeft = true; // at least one vertex is on the left side
                     break;
                 }
             }
@@ -280,17 +298,15 @@ private:
 
 public:
     MeshLoader(const std::string &filename, glm::vec3 translation, bool hasMaterial, Material material = Material()) {
-        //std::cout << "in meshloader\n";
 
         if (hasMaterial) {
             this->setMaterial(material);
         }
 
         std::ifstream file(filename);
-        //std::cout << "opening file\n";
 
         if (!file.is_open()) {
-            //std::cout << "Could not open file " << filename << std::endl;
+            std::cout << "Could not open file " << filename << std::endl;
             return;
         }
 
@@ -302,7 +318,6 @@ public:
 
         glm::vec3 minBounds = glm::vec3(INFINITY);
         glm::vec3 maxBounds = glm::vec3(-INFINITY);
-        //std::cout << "about to read\n";
 
         while (getline(file, line)) {
             if (line[1] == 'n') {
@@ -316,29 +331,21 @@ public:
             } else if (line[0] == 'v') {
                 // vertex
                 sscanf(line.c_str(), "v %f %f %f", &x, &y, &z);
-                // vertices.push_back(
-                //     glm::vec3(x + translation.x, y + translation.y, z +
-                //     translation.z));
                 glm::vec3 vertex(x + translation.x, y + translation.y, z + translation.z);
                 vertices.push_back(vertex);
                 minBounds.x = std::min(minBounds.x, vertex.x);
                 minBounds.y = std::min(minBounds.y, vertex.y);
                 minBounds.z = std::min(minBounds.z, vertex.z);
-
                 maxBounds.x = std::max(maxBounds.x, vertex.x);
                 maxBounds.y = std::max(maxBounds.y, vertex.y);
                 maxBounds.z = std::max(maxBounds.z, vertex.z);
-
             } else if (line[0] == 's') {
-                //std::cout << "s\n";
-                // smooth shading
                 sscanf(line.c_str(), "s %d", &smoothShading);
             } else if (line[0] == 'f') {
-
                 // face
                 // if smoothShading == 0, there are no normals
                 if (smoothShading == 0) {
-                    /*if (hasTexture) { // likely wont have texture if it doesnt have normals
+                    /*if (hasTexture) { // likely wont have texture vertices if it doesnt have normal vertices
                         sscanf(line.c_str(), "f %f %f %f", &x, &y, &z);
                         Triangle triangle = Triangle(vertices[x - 1], vertices[y - 1], vertices[z - 1]);
                         if (hasMaterial) {
@@ -352,8 +359,6 @@ public:
                         triangle.setMaterial(material);
                     }
                     triangles.push_back(triangle);
-                    //}
-
                 } else {
                     if (hasTexture) {
                         sscanf(line.c_str(), "f %f/%f/%f %f/%f/%f %f/%f/%f", &x, &tx, &nx, &y, &ty, &ny, &z, &tz, &nz);
@@ -379,40 +384,24 @@ public:
                 }
             }
         }
-
         file.close();
-        //std::cout << "file closed\n";
         boundingBox = BoundingBox(minBounds, maxBounds);
-        //std::cout << "bounding box\n";
-
         node = new bvh_node(triangles);
-        //std::cout << "new node\n";
-
     }
 
     Hit intersect(Ray &ray) override {
         Hit closest_hit{};
-
         closest_hit.hit = false;
         closest_hit.distance = INFINITY;
         if (!boundingBox.intersect(ray).hit) {
             return closest_hit;
         }
-
         for (Triangle &t: node->bhv_intersect(node, ray)) {
             Hit intersection = t.intersect(ray);
             if (intersection.hit && intersection.distance < closest_hit.distance) {
                 closest_hit = intersection;
             }
         }
-
-        // for (int k = 0; k < triangles.size(); k++) {
-        //   Hit hit = triangles[k].intersect(ray);
-        //   if (hit.hit == true && hit.distance < closest_hit.distance) {
-        //     // cout << hit.hit << endl;
-        //     closest_hit = hit;
-        //   }
-        // }
         closest_hit.object = this;
         return closest_hit;
     }
