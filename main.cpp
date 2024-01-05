@@ -315,13 +315,209 @@ void sceneDefinition() {
     lights.push_back(new Light(glm::vec3(0, 5, 1), glm::vec3(45.0)));
 }
 
+void kyuremScene() {
+
+    Material normal;
+    //normal.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
+    //normal.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
+    //normal.texture = &perlinNormal;
+    normal.hasNormalMap = true;
+    normal.normalMap = &perlinNormal;
+    normal.refraction = 1.0f;
+    normal.reflection = 0.5f;
+    normal.sigma = 1.333f;
+    normal.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
+    normal.ambient = glm::vec3(0.02f, 0.08f, 0.1f);
+    normal.texture = &perlinIceTerrain;
+
+
+    Material water;
+    water.hasNormalMap = true;
+    water.normalMap = &perlinWater;
+    water.refraction = 0.9f;
+    water.sigma = 1.333f;
+    water.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
+    water.texture = &perlinIceTerrain;
+    //water.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
+
+
+
+    Material orange_specular;
+    orange_specular.diffuse = glm::vec3(1.0f, 0.6f, 0.1f);
+    orange_specular.ambient = glm::vec3(0.01f, 0.03f, 0.03f);
+    orange_specular.specular = glm::vec3(0.5);
+    orange_specular.shininess = 10.0;
+
+    Material eyeColor;
+    eyeColor.diffuse = glm::vec3(1.0f, 1.0f, 0.1f);
+    eyeColor.ambient = glm::vec3(1.0f, 1.0f, 0.1f);
+    eyeColor.specular = glm::vec3(0.5);
+    eyeColor.shininess = 100.0;
+
+
+    Material dark;
+    dark.diffuse = glm::vec3(0.00f, 0.00f, 0.009f);
+
+    Material blue_copper_specular;
+    blue_copper_specular.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
+    blue_copper_specular.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
+    blue_copper_specular.specular = glm::vec3(0.6);
+    blue_copper_specular.shininess = 100.0;
+
+    Material grey;
+    grey.ambient = glm::vec3(0.07f, 0.07f, 0.07f);
+    grey.diffuse = glm::vec3(0.3f, 0.3f, 0.3f);
+    grey.specular = glm::vec3(0.3);
+    grey.shininess = 10.0;
+    // grey.reflection = 0.1f;
+
+    Material terrain;
+    terrain.texture = &perlinTerrain;
+
+    Material ice;
+    ice.texture = &perlinIceTerrain;
+    ice.refraction = 0.3f;
+    ice.reflection = 0.5f;
+    ice.sigma = 2.0f;
+    ice.hasNormalMap = true;
+    ice.normalMap = &perlinIceTerrain;
+    ice.ambient = glm::vec3(0.271, 0.373, 0.388);
+    // 0.773, 0.878, 0.894
+    // 0.553, 0.655, 0.671
+    // 0.373, 0.482, 0.502
+    // 0.271, 0.373, 0.388
+
+    Material iceOpaque;
+    iceOpaque.texture = &snowTerrain;
+    iceOpaque.reflection = 0.02f;
+
+    Material crystal;
+    // crystal.texture = &perlinIceTerrain;
+    crystal.sigma = 2.4f; //https://www.gemsociety.org/article/table-refractive-index-double-refraction-gems/
+    crystal.refraction = 1.0f;
+    crystal.reflection = 0.5f;
+    crystal.ambient = glm::vec3(0.1f, 0.2f, 0.3f);
+
+    Material glass;
+    glass.ambient = glm::vec3(0.03, 0.04, 0.05);
+    glass.diffuse = glm::vec3(0.3, 0.4, 0.5);
+    glass.specular = glm::vec3(0.03, 0.04, 0.05);
+    glass.shininess = 0.0;
+    glass.refraction = 1.0f;
+    glass.reflection = 1.0f;
+    glass.sigma = 2.0f;
+
+    Material mirror;
+    mirror.ambient = glm::vec3(0.0f);
+    mirror.diffuse = glm::vec3(0.0f);
+    mirror.specular = glm::vec3(0.0f);
+    mirror.shininess = 0.0;
+    mirror.reflection = 1.0f;
+
+    Material perla;
+    perla.texture = &opal;
+    perla.shininess = 0.9;
+    perla.reflection = 0.1f;
+
+    Material qwilfish;
+    qwilfish.texture = &qwilfishTexture;
+
+    Material qwilfishMouth;
+    qwilfishMouth.ambient = glm::vec3(0.0f);
+    qwilfishMouth.diffuse = glm::vec3(0.941, 0.608, 0.647);
+    qwilfishMouth.shininess = 5.0;
+
+    Material qwilfishEyes;
+    qwilfishEyes.ambient = glm::vec3(0.0f);
+    qwilfishEyes.diffuse = glm::vec3(1, 1, 1);
+    qwilfishEyes.shininess = 5.0;
+
+    objects.push_back(new MeshLoader("./meshes/piattaforma.obj",
+                                     glm::vec3(0.3, -1.5, 0), true, iceOpaque));
+    objects.push_back(new MeshLoader("./meshes/pietre.obj",
+                                     glm::vec3(0.3, -1.5, 0), true, terrain));
+
+
+    objects.push_back(new MeshLoader("./meshes/kyurem_ice_uv.obj",
+                                     glm::vec3(-0.5, -0.425, 1.1), true, ice));
+    objects.push_back(new MeshLoader("./meshes/kyurem_body_uv.obj",
+                                     glm::vec3(-0.5, -0.425, 1.1), true, grey));
+
+    objects.push_back(new MeshLoader("./meshes/crystal_small_uv.obj",
+                                     glm::vec3(-0.29, -0.39, 0.81), true, crystal));
+    objects.push_back(new MeshLoader("./meshes/crystal_small_uv.obj",
+                                     glm::vec3(-0.36, -0.39, 1), true, crystal));
+    objects.push_back(new MeshLoader("./meshes/crystal_big_uv.obj",
+                                     glm::vec3(-0.34, -0.388, 0.77), true, crystal));
+    objects.push_back(new MeshLoader("./meshes/crystal_big_uv.obj",
+                                     glm::vec3(-0.65, -0.388, 1.3), true, crystal));
+    objects.push_back(new MeshLoader("./meshes/crystal_big_uv.obj",
+                                     glm::vec3(-0.59, -0.38, 1.34), true, crystal));
+
+    objects.push_back(new MeshLoader("./meshes/crystal_big_uv.obj",
+                                     glm::vec3(-0.37, -0.388, 1.27), true, crystal));
+    objects.push_back(new MeshLoader("./meshes/crystal_small_uv.obj",
+                                     glm::vec3(-0.36, -0.4, 1.32), true, crystal));
+
+    objects.push_back(new MeshLoader("./meshes/qwilfish_body.obj",
+                                     glm::vec3(-1.5, -0.65, 1.1), true, qwilfish));
+    objects.push_back(new MeshLoader("./meshes/qwilfish_eyes.obj",
+                                     glm::vec3(-1.5, -0.65, 1.1), true, qwilfishEyes));
+    objects.push_back(new MeshLoader("./meshes/qwilfish_mouth.obj",
+                                     glm::vec3(-1.5, -0.65, 1.1), true, qwilfishMouth));
+
+
+    objects.push_back(new MeshLoader("./meshes/crystalpillar.obj",
+                                     glm::vec3(-0.565, -0.225, 1.46), true, crystal));
+    objects.push_back(new MeshLoader("./meshes/crystalpillar.obj",
+                                     glm::vec3(-0.555, -0.255, 1.425), true, crystal));
+    objects.push_back(new MeshLoader("./meshes/crystalpillar.obj",
+                                     glm::vec3(-0.545, -0.235, 1.39), true, crystal));
+
+
+    objects.push_back(new Plane(glm::vec3(0.0f, -0.6f, 14.995f),
+                                glm::vec3(0.0f, 1.0f, 0.0f), true, normal));
+
+    objects.push_back(new Plane(glm::vec3(0.0f, -0.61f, 14.995f),
+                                glm::vec3(0.0f, 1.0f, 0.0f), true, water));
+
+
+    auto *kyuremEye = new Sphere(eyeColor);
+    kyuremEye->setTransformation(glm::translate(glm::vec3(-0.491, -0.281, 1.353)) * glm::scale(glm::vec3(0.003)));
+    objects.push_back(kyuremEye);
+
+    auto *glassSphere = new Sphere(normal);
+    glassSphere->setTransformation(glm::translate(glm::vec3(-0.53, -0.38, 1.42)) * glm::scale(glm::vec3(0.03)));
+    objects.push_back(glassSphere);
+    //lights.push_back(new Light(glm::vec3(-0.48, -0.39, 1.4), glm::vec3(1.0)));
+
+    //objects.push_back(new Plane(glm::vec3(-0.39, -0.21, 5),
+    //                            glm::vec3(0.0f, 0.0f, 1.0f), true, blue_copper_specular));
+    //lights.push_back(new Light(glm::vec3(-0.65, 15, 0), glm::vec3(100.0)));
+
+    lights.push_back(
+            new Light(glm::vec3(11, 25, -5), glm::vec3(120.0))); // top light
+    lights.push_back(new Light(glm::vec3(-6, 9, 0), glm::vec3(100.0f)));
+    lights.push_back(new Light(glm::vec3(0, -0.1, 2.5), glm::vec3(0.5f)));
+    lights.push_back(new Light(glm::vec3(-0.7, 0.1, 1.2), glm::vec3(0.05f)));
+
+
+    /*
+     *     glm::vec3 origin(-0.45, 0.5, 1.4); // z smaller value -> it goes forward
+     *     float xTiltAngle = -1.0; // Adjust this value as needed
+     *     float yTiltAngle = 0.4;
+     *     glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+     *     rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+     */
+}
+
 int main(int argc, const char *argv[]) {
     cout << "Running on " << omp_get_max_threads() << " threads\n";
 
     chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
-    int width = /*320 1024 2048*/ 320 * 2; // width of the image
-    int height = /*210 768 1536*/ 210 * 2; // height of the image
+    int width = /*320 1024 2048*/ 2048; // width of the image
+    int height = /*210 768 1536*/ 1536; // height of the image
     float fov = 90; // field of view
 
     sceneDefinition();
