@@ -176,8 +176,8 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec3 normalShading,
                 float O1 = cos(glm::angle(normalShading, view_direction));
                 float O2 = cos(glm::angle(-normalShading, refraction_direction));
 
-                float R = 0.5 * (pow((n1 * O1 - n2 * O2) / (n1 * O1 + n2 * O2), 2) +
-                                 pow((n1 * O2 - n2 * O1) / (n1 * O2 + n2 * O1), 2));
+                float R = 0.5f * (pow((n1 * O1 - n2 * O2) / (n1 * O1 + n2 * O2), 2) +
+                                  pow((n1 * O2 - n2 * O1) / (n1 * O2 + n2 * O1), 2));
                 float T = 1 - R;
 
                 reflection *= R;
@@ -224,7 +224,7 @@ glm::vec3 toneMapping(glm::vec3 intensity) {
     float alpha = 1.5f;
     float beta = 1.8f;
     float gamma = 2.2f;
-    float oneOverGamma = 1.0 / gamma;
+    float oneOverGamma = 1.0f / gamma;
 
     glm::vec3 new_intensity;
 
@@ -240,7 +240,7 @@ glm::vec3 toneMapping(glm::vec3 intensity) {
 /**
  Function defining the scene
  */
-void sceneDefinition() {
+void sampleScene() {
 
     Material orange_specular;
     orange_specular.diffuse = glm::vec3(1.0f, 0.6f, 0.1f);
@@ -315,21 +315,17 @@ void sceneDefinition() {
     lights.push_back(new Light(glm::vec3(0, 5, 1), glm::vec3(45.0)));
 }
 
-void kyuremScene() {
+void competitionScene() {
 
-    Material normal;
-    //normal.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
-    //normal.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
-    //normal.texture = &perlinNormal;
-    normal.hasNormalMap = true;
-    normal.normalMap = &perlinNormal;
-    normal.refraction = 1.0f;
-    normal.reflection = 0.5f;
-    normal.sigma = 1.333f;
-    normal.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
-    normal.ambient = glm::vec3(0.02f, 0.08f, 0.1f);
-    normal.texture = &perlinIceTerrain;
-
+    Material perlinNormalMap;
+    perlinNormalMap.hasNormalMap = true;
+    perlinNormalMap.normalMap = &perlinNormal;
+    perlinNormalMap.refraction = 1.0f;
+    perlinNormalMap.reflection = 0.5f;
+    perlinNormalMap.sigma = 1.333f;
+    perlinNormalMap.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
+    perlinNormalMap.ambient = glm::vec3(0.02f, 0.08f, 0.1f);
+    perlinNormalMap.texture = &perlinIceTerrain;
 
     Material water;
     water.hasNormalMap = true;
@@ -338,15 +334,6 @@ void kyuremScene() {
     water.sigma = 1.333f;
     water.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
     water.texture = &perlinIceTerrain;
-    //water.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
-
-
-
-    Material orange_specular;
-    orange_specular.diffuse = glm::vec3(1.0f, 0.6f, 0.1f);
-    orange_specular.ambient = glm::vec3(0.01f, 0.03f, 0.03f);
-    orange_specular.specular = glm::vec3(0.5);
-    orange_specular.shininess = 10.0;
 
     Material eyeColor;
     eyeColor.diffuse = glm::vec3(1.0f, 1.0f, 0.1f);
@@ -354,22 +341,11 @@ void kyuremScene() {
     eyeColor.specular = glm::vec3(0.5);
     eyeColor.shininess = 100.0;
 
-
-    Material dark;
-    dark.diffuse = glm::vec3(0.00f, 0.00f, 0.009f);
-
-    Material blue_copper_specular;
-    blue_copper_specular.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
-    blue_copper_specular.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
-    blue_copper_specular.specular = glm::vec3(0.6);
-    blue_copper_specular.shininess = 100.0;
-
     Material grey;
     grey.ambient = glm::vec3(0.07f, 0.07f, 0.07f);
     grey.diffuse = glm::vec3(0.3f, 0.3f, 0.3f);
     grey.specular = glm::vec3(0.3);
     grey.shininess = 10.0;
-    // grey.reflection = 0.1f;
 
     Material terrain;
     terrain.texture = &perlinTerrain;
@@ -382,42 +358,17 @@ void kyuremScene() {
     ice.hasNormalMap = true;
     ice.normalMap = &perlinIceTerrain;
     ice.ambient = glm::vec3(0.271, 0.373, 0.388);
-    // 0.773, 0.878, 0.894
-    // 0.553, 0.655, 0.671
-    // 0.373, 0.482, 0.502
-    // 0.271, 0.373, 0.388
 
     Material iceOpaque;
     iceOpaque.texture = &snowTerrain;
     iceOpaque.reflection = 0.02f;
 
     Material crystal;
-    // crystal.texture = &perlinIceTerrain;
-    crystal.sigma = 2.4f; //https://www.gemsociety.org/article/table-refractive-index-double-refraction-gems/
+    crystal.sigma = 2.4f;
+    // source: https://www.gemsociety.org/article/table-refractive-index-double-refraction-gems/
     crystal.refraction = 1.0f;
     crystal.reflection = 0.5f;
     crystal.ambient = glm::vec3(0.1f, 0.2f, 0.3f);
-
-    Material glass;
-    glass.ambient = glm::vec3(0.03, 0.04, 0.05);
-    glass.diffuse = glm::vec3(0.3, 0.4, 0.5);
-    glass.specular = glm::vec3(0.03, 0.04, 0.05);
-    glass.shininess = 0.0;
-    glass.refraction = 1.0f;
-    glass.reflection = 1.0f;
-    glass.sigma = 2.0f;
-
-    Material mirror;
-    mirror.ambient = glm::vec3(0.0f);
-    mirror.diffuse = glm::vec3(0.0f);
-    mirror.specular = glm::vec3(0.0f);
-    mirror.shininess = 0.0;
-    mirror.reflection = 1.0f;
-
-    Material perla;
-    perla.texture = &opal;
-    perla.shininess = 0.9;
-    perla.reflection = 0.1f;
 
     Material qwilfish;
     qwilfish.texture = &qwilfishTexture;
@@ -436,7 +387,6 @@ void kyuremScene() {
                                      glm::vec3(0.3, -1.5, 0), true, iceOpaque));
     objects.push_back(new MeshLoader("./meshes/pietre.obj",
                                      glm::vec3(0.3, -1.5, 0), true, terrain));
-
 
     objects.push_back(new MeshLoader("./meshes/kyurem_ice_uv.obj",
                                      glm::vec3(-0.5, -0.425, 1.1), true, ice));
@@ -474,41 +424,25 @@ void kyuremScene() {
     objects.push_back(new MeshLoader("./meshes/crystalpillar.obj",
                                      glm::vec3(-0.545, -0.235, 1.39), true, crystal));
 
-
     objects.push_back(new Plane(glm::vec3(0.0f, -0.6f, 14.995f),
-                                glm::vec3(0.0f, 1.0f, 0.0f), true, normal));
+                                glm::vec3(0.0f, 1.0f, 0.0f), true, perlinNormalMap));
 
     objects.push_back(new Plane(glm::vec3(0.0f, -0.61f, 14.995f),
                                 glm::vec3(0.0f, 1.0f, 0.0f), true, water));
-
 
     auto *kyuremEye = new Sphere(eyeColor);
     kyuremEye->setTransformation(glm::translate(glm::vec3(-0.491, -0.281, 1.353)) * glm::scale(glm::vec3(0.003)));
     objects.push_back(kyuremEye);
 
-    auto *glassSphere = new Sphere(normal);
+    auto *glassSphere = new Sphere(perlinNormalMap);
     glassSphere->setTransformation(glm::translate(glm::vec3(-0.53, -0.38, 1.42)) * glm::scale(glm::vec3(0.03)));
     objects.push_back(glassSphere);
-    //lights.push_back(new Light(glm::vec3(-0.48, -0.39, 1.4), glm::vec3(1.0)));
-
-    //objects.push_back(new Plane(glm::vec3(-0.39, -0.21, 5),
-    //                            glm::vec3(0.0f, 0.0f, 1.0f), true, blue_copper_specular));
-    //lights.push_back(new Light(glm::vec3(-0.65, 15, 0), glm::vec3(100.0)));
 
     lights.push_back(
             new Light(glm::vec3(11, 25, -5), glm::vec3(120.0))); // top light
     lights.push_back(new Light(glm::vec3(-6, 9, 0), glm::vec3(100.0f)));
     lights.push_back(new Light(glm::vec3(0, -0.1, 2.5), glm::vec3(0.5f)));
     lights.push_back(new Light(glm::vec3(-0.7, 0.1, 1.2), glm::vec3(0.05f)));
-
-
-    /*
-     *     glm::vec3 origin(-0.45, 0.5, 1.4); // z smaller value -> it goes forward
-     *     float xTiltAngle = -1.0; // Adjust this value as needed
-     *     float yTiltAngle = 0.4;
-     *     glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-     *     rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
-     */
 }
 
 int main(int argc, const char *argv[]) {
@@ -520,8 +454,16 @@ int main(int argc, const char *argv[]) {
     int height = /*210 768 1536*/ 1536; // height of the image
     float fov = 90; // field of view
 
-    sceneDefinition();
-    //kyuremScene(); // Let's define a scene
+    /*
+     * To switch between the scenes, make sure you uncomment the right settings for each scene.
+     * Please use the search function to look for all the places to uncomment.
+     * Sorry for the confusion!
+     */
+    sampleScene();
+    // when using sampleScene, uncomment the sampleScene settings
+
+    //competitionScene();
+    // when using competitionScene, uncomment the competitionScene settings
 
     cout << "Scene was loaded succesfully\n";
     Image image(width, height); // Create an image where we will store the result
@@ -530,32 +472,44 @@ int main(int argc, const char *argv[]) {
     const float X = -s * width / 2;
     const float Y = s * height / 2;
 
-    // Define tiles for parallelization
-    // Tiles are a good way to parallelize ray tracing since we can expect that rays in the same tile will behave similarly (i.e. they will hit the same objects).
     const int tile_size = 16;
-    const int tiles_x = (width + tile_size - 1) / tile_size;   // add one tile if width is not a multiple of tile_size
-    const int tiles_y = (height + tile_size - 1) / tile_size;  // add one tile if height is not a multiple of tile_size
+    const int tiles_x = (width + tile_size - 1) / tile_size;
+    const int tiles_y = (height + tile_size - 1) / tile_size;
     const int tile_count = tiles_x * tiles_y;
+
+    // sampleScene settings
     glm::vec3 origin(0.0);
-    //glm::vec3 origin(-0.45, -0.21, 1.52); // z smaller value -> it goes forward
-    //float xTiltAngle = -0.75; // Adjust this value as needed
 
-    //glm::vec3 origin(-0.39, -0.21, 1.5); // z smaller value -> it goes forward
-    //float xTiltAngle = -0.75; // Adjust this value as needed
+    // competitionScene settings
+    /*
+     * glm::vec3 origin(-0.45, -0.21, 1.52); // z smaller value -> it goes forward
+     * float xTiltAngle = -0.75;
+     * float yTiltAngle = 0.4;
+     * glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+     * rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+     */
 
-    // topdown angle
-    // glm::vec3 origin(-0.45, 0.5, 1.4);
-    // glm::vec3 origin(-0.4, 0, 1.5);
-    // float xTiltAngle = -1.0;
+    // topdown angle for competitionScene
+    /*
+     * glm::vec3 origin(-0.45, 0.5, 1.4);
+     * glm::vec3 origin(-0.4, 0, 1.5);
+     * float xTiltAngle = -1.0;
+     * float yTiltAngle = 0.4;
+     * glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+     * rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
 
-    // debug angle
-    //glm::vec3 origin(-0.45, 0, 1.8);
-    //float xTiltAngle = -0.4;
+     */
 
-    float yTiltAngle = 0.4;
-    //glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-    //rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+    // debug angle for competitionScene
+    /*
+    * glm::vec3 origin(-0.45, 0, 1.8);
+    * float xTiltAngle = -0.4;
+    * float yTiltAngle = 0.4;
+    * glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+    * rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+    */
 
+    //FEAT: SUPER SAMPLING ANTI ALIASING (SSAA)
     float jitterMatrix[4 * 2] = {
             -1.0 / 4.0, 3.0 / 4.0,
             3.0 / 4.0, 1.0 / 3.0,
@@ -580,30 +534,30 @@ int main(int argc, const char *argv[]) {
             for (int j = tile_j_start; j < tile_j_end; j++) {
                 glm::vec3 pixelColor(0.0f);
 
-                // super sampling anti aliasing
-                //for (int sample = 0; sample < 4; ++sample) {
-                //  float jitterX = jitterMatrix[2 * sample];
-                //float jitterY = jitterMatrix[2 * sample + 1];
+                //FEAT: SUPER SAMPLING ANTI ALIASING (SSAA)
+                for (int sample = 0; sample < 4; ++sample) {
+                    float jitterX = jitterMatrix[2 * sample];
+                    float jitterY = jitterMatrix[2 * sample + 1];
 
-                float dx = X + (i) * s + s / 2;
-                float dy = Y - (j) * s - s / 2;
-                float dz = 1;
+                    float dx = X + (i) * s + s / 2;
+                    float dy = Y - (j) * s - s / 2;
+                    float dz = 1;
 
+                    // sampleScene settings
+                    glm::vec4 direction4(dx, dy, dz, 0.0f);
 
-                // Tilt the camera down by adjusting the pitch angle
-                glm::vec4 direction4(dx, dy, dz, 0.0f);
-                //direction4 = rotationMatrix * direction4;
+                    // competitionScene settings
+                    /*
+                     * glm::vec4 direction4(dx, dy, -dz, 0.0f);
+                     * direction4 = rotationMatrix * direction4;
+                     */
 
-                // Normalize the direction vector
-                glm::vec3 direction = glm::normalize(glm::vec3(direction4));
+                    glm::vec3 direction = glm::normalize(glm::vec3(direction4));
+                    Ray ray(origin, direction);
+                    pixelColor += trace_ray(ray, 3);
+                }
 
-
-                Ray ray(origin, direction);
-
-                pixelColor += trace_ray(ray, 3);
-                //    }
-
-                //    pixelColor /= 4.0f;
+                pixelColor /= 4.0f;
                 image.setPixel(i, j, toneMapping(pixelColor));
             }
 
@@ -612,7 +566,6 @@ int main(int argc, const char *argv[]) {
     chrono::duration<double> time_span = chrono::duration_cast<chrono::duration<double>>(end - start);
     cout << "It took " << time_span.count() << " seconds to render the image." << endl;
 
-    // Writing the final results of the rendering
     if (argc == 2) {
         image.writeImage(argv[1]);
     } else {
