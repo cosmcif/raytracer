@@ -24,20 +24,20 @@ struct Material {
 
     glm::vec3 (*texture)(glm::vec2 uv) = nullptr;
 
+    // FEAT: NORMAL MAPS
     bool hasNormalMap = false;
-
     glm::vec3 (*normalMap)(glm::vec2 uv) = nullptr;
 
+    // FEAT: SPECULAR HIGHLIGHTS
     bool isAnisotropic = false;
     float alpha_x = 0.05f;
     float alpha_y = 0.16f;
     // https://cseweb.ucsd.edu/~ravir/6998/papers/p265-ward.pdf
 
+    // FEAT: IMAGE TEXTURES
     bool hasImgTexture = false;
     float_t (*roughness)(glm::vec2 uv) = nullptr;
     float_t (*occlusion)(glm::vec2 uv) = nullptr;
-
-
 };
 
 #endif /* Material_h */
