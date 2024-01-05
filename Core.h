@@ -50,8 +50,8 @@ struct Hit {
   // Coordinates for computing the texture (texture coordinates).
   glm::vec2 uv;
 
+  // FEAT: NORMAL MAPS
   glm::vec3 normalShading;
-
   glm::vec3 tangent;
   glm::vec3 bitangent;
 };
