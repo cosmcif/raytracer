@@ -33,6 +33,11 @@ struct Material {
     float alpha_y = 0.16f;
     // https://cseweb.ucsd.edu/~ravir/6998/papers/p265-ward.pdf
 
+    bool hasImgTexture = false;
+    float_t (*roughness)(glm::vec2 uv) = nullptr;
+    float_t (*occlusion)(glm::vec2 uv) = nullptr;
+
+
 };
 
 #endif /* Material_h */

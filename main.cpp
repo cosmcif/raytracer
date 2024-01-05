@@ -111,25 +111,17 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec3 normalShading,
             glm::vec3 diffusion = attenuation * light->color * diffuse_color * diffuse;
 
             glm::vec3 specular_term = glm::vec3(0.0f); // Initialize to zero
-            if (material.isAnisotropic) {
-                float NdotL = glm::dot(normalShading, light_direction);
-                float NdotV = glm::dot(normalShading, view_direction);
-
-                if (NdotL > 0 && NdotV > 0) {
-                    float HdotTangent = glm::dot(h, hit.tangent);
-                    float HdotBitangent = glm::dot(h, hit.bitangent);
-                    float HdotN = glm::dot(h, normalShading);
-
-                    float exponent = -2.0f * (glm::pow((HdotTangent / material.alpha_x), 2.0f)
-                                              * glm::pow((HdotBitangent / material.alpha_y), 2.0f)) / (1 + HdotN);
-
-                    specular_term = (material.specular * NdotL * exp(exponent)) /
-                                    (sqrt(NdotL * NdotV) * 4 * glm::pi<float>() * material.alpha_x * material.alpha_y);
-                }
+            float shiny;
+            if (material.hasImgTexture) {
+                shiny = (0.5f / pow((material.roughness(uv)), 4)) - 0.5;
             } else {
-                const float specular = max(0.0f, glm::pow(glm::dot(h, normalShading), 4 * material.shininess));
-                specular_term = attenuation * light->color * material.specular * specular;
+                shiny = material.shininess;
             }
+
+            const float specular = max(0.0f, glm::pow(glm::dot(h, normalShading), 4 * shiny));
+
+            specular_term = attenuation * light->color * material.specular * specular;
+
             // Attenuation
 
             color += diffusion + specular_term;
@@ -194,8 +186,11 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec3 normalShading,
         }
         color += reflection + refraction;
     }
-
-    color += ambient_light * material.ambient;
+    if (material.hasImgTexture) {
+        color += ambient_light * 0.1f * material.occlusion(uv);
+    } else {
+        color += ambient_light * material.ambient;
+    }
     return color;
 }
 
@@ -259,73 +254,13 @@ void sceneDefinition() {
     blue_copper_specular.specular = glm::vec3(0.6);
     blue_copper_specular.shininess = 100.0;
 
-    Material terrain;
-    terrain.texture = &perlinTerrain;
-
-    Material normal;
-    //normal.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
-    //normal.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
-    //normal.texture = &perlinNormal;
-    normal.hasNormalMap = true;
-    normal.normalMap = &perlinNormal;
-    normal.refraction = 1.0f;
-    normal.reflection = 0.5f;
-    normal.sigma = 2.0f;
-
-
-    Material water;
-    water.hasNormalMap = true;
-    water.normalMap = &perlinWater;
-    water.refraction = 1.0f;
-    water.reflection = 0.5f;
-    water.sigma = 2.0f;
-    water.alpha_x = 0.7f;
-    water.alpha_y = 0.3f;
-    water.isAnisotropic = true;
-    water.shininess = 0.6f;
-
-
-    Material opaqueIce;
-    opaqueIce.hasNormalMap = true;
-    opaqueIce.normalMap = &perlinIceTerrain;
-    opaqueIce.refraction = 0.5f;
-    opaqueIce.reflection = 0.5f;
-    opaqueIce.sigma = 2.0f;
-    opaqueIce.alpha_x = 0.1f;
-    opaqueIce.alpha_y = 0.8f;
-    opaqueIce.isAnisotropic = true;
-    opaqueIce.shininess = 0.6f;
-    opaqueIce.specular = glm::vec3(0.2f, 0.8f, 0.8f);
-    opaqueIce.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
-    opaqueIce.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
-    Material ice;
-    ice.texture = &perlinIceTerrain;
-    ice.refraction = 0.5f;
-    ice.reflection = 0.5f;
-    ice.sigma = 2.0f;
-
-    Material perla;
-    perla.texture = &opal;
-    perla.shininess = 0.9;
-    perla.refraction = 0.8f;
-    perla.reflection = 0.1f;
-    perla.sigma = 2.0f;
-
-    Material glass;
-    glass.ambient = glm::vec3(0.0f);
-    glass.diffuse = glm::vec3(0.0f);
-    glass.specular = glm::vec3(0.0f);
-    glass.shininess = 0.0;
-    glass.refraction = 1.0f;
-    glass.reflection = 1.0f;
-    glass.sigma = 2.0f;
-
-    Material mirror;
-    mirror.ambient = glm::vec3(0.0f);
-    mirror.diffuse = glm::vec3(0.0f);
-    mirror.specular = glm::vec3(0.0f);
-    mirror.shininess = 0.0;
-    mirror.reflection = 1.0f;
+    Material img_texture;
+    img_texture.hasImgTexture = true;
+    img_texture.hasNormalMap = true;
+    img_texture.normalMap = &normalAt;
+    img_texture.texture = &colorAt;
+    img_texture.roughness = &roughnessAt;
+    img_texture.occlusion = &ambientOcclusionAt;
 
     //objects.push_back(new MeshLoader("./meshes/bunny.obj",
     //                                 glm::vec3(0, -3, 9), true, glass));
@@ -368,15 +303,10 @@ void sceneDefinition() {
     objects.push_back(texturedSphere);
     */
 
-    auto *glassSphere = new Sphere(orange_specular);
-    glm::mat4 glassMatrix = glm::translate(glm::vec3(-5, -1, 8)) * glm::scale(glm::vec3(2.0));
+    auto *glassSphere = new Sphere(img_texture);
+    glm::mat4 glassMatrix = glm::translate(glm::vec3(-3, 0, 10)) * glm::scale(glm::vec3(3.0));
     glassSphere->setTransformation(glassMatrix);
     objects.push_back(glassSphere);
-
-    auto *glass2Sphere = new Sphere(orange_specular);
-    glass2Sphere->setTransformation(glm::translate(glm::vec3(5, -1, 14)) * glm::scale(glm::vec3(2.0)));
-    objects.push_back(glass2Sphere);
-
 
     lights.push_back(
             new Light(glm::vec3(0, 26, 5), glm::vec3(130.0))); // top light
@@ -590,8 +520,8 @@ int main(int argc, const char *argv[]) {
     int height = /*210 768 1536*/ 1536; // height of the image
     float fov = 90; // field of view
 
-    //sceneDefinition();
-    kyuremScene(); // Let's define a scene
+    sceneDefinition();
+    //kyuremScene(); // Let's define a scene
 
     cout << "Scene was loaded succesfully\n";
     Image image(width, height); // Create an image where we will store the result
@@ -606,9 +536,9 @@ int main(int argc, const char *argv[]) {
     const int tiles_x = (width + tile_size - 1) / tile_size;   // add one tile if width is not a multiple of tile_size
     const int tiles_y = (height + tile_size - 1) / tile_size;  // add one tile if height is not a multiple of tile_size
     const int tile_count = tiles_x * tiles_y;
-    //glm::vec3 origin(0.0);
-    glm::vec3 origin(-0.45, -0.21, 1.52); // z smaller value -> it goes forward
-    float xTiltAngle = -0.75; // Adjust this value as needed
+    glm::vec3 origin(0.0);
+    //glm::vec3 origin(-0.45, -0.21, 1.52); // z smaller value -> it goes forward
+    //float xTiltAngle = -0.75; // Adjust this value as needed
 
     //glm::vec3 origin(-0.39, -0.21, 1.5); // z smaller value -> it goes forward
     //float xTiltAngle = -0.75; // Adjust this value as needed
@@ -623,8 +553,8 @@ int main(int argc, const char *argv[]) {
     //float xTiltAngle = -0.4;
 
     float yTiltAngle = 0.4;
-    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-    rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+    //glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+    //rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
 
     float jitterMatrix[4 * 2] = {
             -1.0 / 4.0, 3.0 / 4.0,
@@ -651,29 +581,29 @@ int main(int argc, const char *argv[]) {
                 glm::vec3 pixelColor(0.0f);
 
                 // super sampling anti aliasing
-                for (int sample = 0; sample < 4; ++sample) {
-                    float jitterX = jitterMatrix[2 * sample];
-                    float jitterY = jitterMatrix[2 * sample + 1];
+                //for (int sample = 0; sample < 4; ++sample) {
+                //  float jitterX = jitterMatrix[2 * sample];
+                //float jitterY = jitterMatrix[2 * sample + 1];
 
-                    float dx = X + (i + jitterX) * s + s / 2;
-                    float dy = Y - (j + jitterY) * s - s / 2;
-                    float dz = 1;
-
-
-                    // Tilt the camera down by adjusting the pitch angle
-                    glm::vec4 direction4(dx, dy, -dz, 0.0f);
-                    direction4 = rotationMatrix * direction4;
-
-                    // Normalize the direction vector
-                    glm::vec3 direction = glm::normalize(glm::vec3(direction4));
+                float dx = X + (i) * s + s / 2;
+                float dy = Y - (j) * s - s / 2;
+                float dz = 1;
 
 
-                    Ray ray(origin, direction);
+                // Tilt the camera down by adjusting the pitch angle
+                glm::vec4 direction4(dx, dy, dz, 0.0f);
+                //direction4 = rotationMatrix * direction4;
 
-                    pixelColor += trace_ray(ray, 3);
-                }
+                // Normalize the direction vector
+                glm::vec3 direction = glm::normalize(glm::vec3(direction4));
 
-                pixelColor /= 4.0f;
+
+                Ray ray(origin, direction);
+
+                pixelColor += trace_ray(ray, 3);
+                //    }
+
+                //    pixelColor /= 4.0f;
                 image.setPixel(i, j, toneMapping(pixelColor));
             }
 
