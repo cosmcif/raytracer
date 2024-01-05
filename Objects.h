@@ -2,6 +2,8 @@
 #ifndef OBJECTS_H
 #define OBJECTS_H
 
+#include <cmath>
+
 #include "Object.h"
 
 /**
@@ -48,7 +50,7 @@ public:
 
         double D = 0;
         if (cdotc > cdotd * cdotd) {
-            D = sqrt(cdotc - cdotd * cdotd);
+            D = std::sqrt(cdotc - cdotd * cdotd);
         }
 
         if (D <= radius) {
@@ -78,6 +80,7 @@ public:
             hit.uv.s = (asin(newNormal.y) + M_PI / 2) / M_PI;
             hit.uv.t = (atan2(newNormal.z, newNormal.x) + M_PI) / (2 * M_PI);
 
+            // FEAT: NORMAL MAPS
             if (material.hasNormalMap) {
                 glm::vec3 tangent = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), hit.intersection));
                 glm::vec3 bitangent = glm::normalize(glm::cross(hit.normal, tangent));
@@ -89,7 +92,6 @@ public:
                 glm::mat3 TBN = glm::mat3(tangent, bitangent, hit.normal);
 
                 hit.normalShading = glm::normalize(TBN * normal_map);
-                // std::cout << "Normal Shading: (" << hit.normalShading.x << ", " << hit.normalShading.y << ", " << hit.normalShading.z << ")" << std::endl;
             }
 
 
@@ -156,9 +158,11 @@ public:
         hit.distance = t;
         hit.object = this;
         hit.hit = true;
-        hit.uv.x = 0.1 * hit.intersection.x;
-        hit.uv.y = 0.1 * hit.intersection.z;
+        hit.uv.x = 0.1f * hit.intersection.x;
+        hit.uv.y = 0.1f * hit.intersection.z;
         hit.normalShading = normal;
+
+        // FEAT: NORMAL MAPS
         if (material.hasNormalMap) {
             glm::vec3 tangent = glm::vec3(0, 0, 1);
             glm::vec3 bitangent = glm::vec3(1, 0, 0);
@@ -171,7 +175,6 @@ public:
             glm::mat3 TBN = glm::mat3(tangent, bitangent, hit.normal);
 
             hit.normalShading = glm::normalize(TBN * normal_map);
-            // std::cout << "Normal Shading: (" << hit.normalShading.x << ", " << hit.normalShading.y << ", " << hit.normalShading.z << ")" << std::endl;
 
         }
 
@@ -213,7 +216,6 @@ public:
         glm::vec3 newDirection = glm::normalize(
                 glm::vec3(inverseTransformationMatrix * glm::vec4(ray.direction, 0.0)));
 
-        // Solve for the intersection of the ray and the cone
         float a = newDirection.x * newDirection.x +
                   newDirection.z * newDirection.z - newDirection.y * newDirection.y;
         float b = 2 * (newOrigin.x * newDirection.x + newOrigin.z * newDirection.z -
@@ -227,8 +229,8 @@ public:
             return hit;
         }
 
-        float t1 = (-b - sqrt(delta)) / (2 * a);
-        float t2 = (-b + sqrt(delta)) / (2 * a);
+        float t1 = (-b - std::sqrt(delta)) / (2 * a);
+        float t2 = (-b + std::sqrt(delta)) / (2 * a);
 
         float t = t1;
         glm::vec3 newIntersection = newOrigin + t * newDirection;
@@ -266,7 +268,7 @@ public:
         glm::vec3 newNormalGlobal =
                 glm::normalize(glm::vec3(normalMatrix * glm::vec4(newNormal, 0.0)));
         hit.normal = newNormalGlobal;
-        hit.normalShading = newNormalGlobal;
+        hit.normalShading = newNormalGlobal; // cone has no normal map available lol
 
         hit.uv.s = (asin(newNormal.y) + M_PI / 2) / M_PI;
         hit.uv.t = (atan2(newNormal.z, newNormal.x) + M_PI) / (2 * M_PI);
