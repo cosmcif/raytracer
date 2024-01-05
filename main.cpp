@@ -111,6 +111,7 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec3 normalShading,
             glm::vec3 diffusion = attenuation * light->color * diffuse_color * diffuse;
 
             glm::vec3 specular_term = glm::vec3(0.0f); // Initialize to zero
+
             float shiny;
             if (material.hasImgTexture) {
                 shiny = (0.5f / pow((material.roughness(uv)), 4)) - 0.5;
@@ -118,11 +119,27 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec3 normalShading,
                 shiny = material.shininess;
             }
 
-            const float specular = max(0.0f, glm::pow(glm::dot(h, normalShading), 4 * shiny));
+            if (material.isAnisotropic) {
+                // https://en.wikipedia.org/wiki/Specular_highlight#Ward_anisotropic_distribution
 
-            specular_term = attenuation * light->color * material.specular * specular;
+                float NdotL = glm::dot(normalShading, light_direction);
+                float NdotV = glm::dot(normalShading, view_direction);
 
-            // Attenuation
+                if (NdotL > 0 && NdotV > 0) {
+                    float HdotTangent = glm::dot(h, hit.tangent);
+                    float HdotBitangent = glm::dot(h, hit.bitangent);
+                    float HdotN = glm::dot(h, normalShading);
+
+                    float exponent = -2.0f * (glm::pow((HdotTangent / material.alpha_x), 2.0f)
+                                              * glm::pow((HdotBitangent / material.alpha_y), 2.0f)) / (1 + HdotN);
+
+                    specular_term = (material.specular * NdotL * exp(exponent)) /
+                                    (sqrt(NdotL * NdotV) * 4 * glm::pi<float>() * material.alpha_x * material.alpha_y);
+                }
+            } else {
+                const float specular = max(0.0f, glm::pow(glm::dot(h, normalShading), 4 * shiny));
+                specular_term = attenuation * light->color * material.specular * specular;
+            }
 
             color += diffusion + specular_term;
         }
