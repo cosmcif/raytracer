@@ -543,8 +543,8 @@ int main(int argc, const char *argv[]) {
 
     chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
-    int width = /*320 1024 2048*/ 1024; // width of the image
-    int height = /*210 768 1536*/ 768; // height of the image
+    int width = /*320 1024 2048*/ 2048; // width of the image
+    int height = /*210 768 1536*/ 1536; // height of the image
     float fov = 90; // field of view
 
     /*
