@@ -114,7 +114,7 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec3 normalShading,
 
             float shiny;
             if (material.hasImgTexture) {
-                shiny = (0.5f / pow((material.roughness(uv)), 4)) - 0.5;
+                shiny = (0.5f / pow((material.roughness(uv)), 4)) - 0.5f;
             } else {
                 shiny = material.shininess;
             }
@@ -632,8 +632,8 @@ int main(int argc, const char *argv[]) {
                     float jitterX = jitterMatrix[2 * sample];
                     float jitterY = jitterMatrix[2 * sample + 1];
 
-                    float dx = X + (i) * s + s / 2;
-                    float dy = Y - (j) * s - s / 2;
+                    float dx = X + (i + jitterX) * s + s / 2;
+                    float dy = Y - (j + jitterY) * s - s / 2;
                     float dz = 1;
 
                     // sampleScene settings
