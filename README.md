@@ -1,6 +1,8 @@
 # Raytracer 
 USI Computer Graphics rendering competition 2023 (we won :p). All results [here](https://www.pdf.inf.usi.ch/rendering_competition/2023/).
 
+Run the code with
+`g++ main.cpp -Ofast; ./a.out`
 ## Authors
 - Sofia d'Atri
 - Nicolò Tafta
