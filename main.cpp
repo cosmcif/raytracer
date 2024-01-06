@@ -255,9 +255,6 @@ glm::vec3 toneMapping(glm::vec3 intensity) {
     return glm::clamp(tonemapped, glm::vec3(0.0), glm::vec3(1.0));
 }
 
-/**
- Function defining the scene
- */
 void sampleScene() {
 
     Material orange;
@@ -543,8 +540,8 @@ int main(int argc, const char *argv[]) {
 
     chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
-    int width = /*320 1024 2048*/ 2048; // width of the image
-    int height = /*210 768 1536*/ 1536; // height of the image
+    int width = /*320 1024 2048*/ 1024; // width of the image
+    int height = /*210 768 1536*/ 768; // height of the image
     float fov = 90; // field of view
 
     /*
@@ -552,10 +549,10 @@ int main(int argc, const char *argv[]) {
      * Please use the search function to look for all the places to uncomment.
      * Sorry for the confusion!
      */
-    sampleScene();
+    //sampleScene();
     // when using sampleScene, uncomment the sampleScene settings
 
-    //competitionScene();
+    competitionScene();
     // when using competitionScene, uncomment the competitionScene settings
 
     cout << "Scene was loaded succesfully\n";
@@ -571,16 +568,15 @@ int main(int argc, const char *argv[]) {
     const int tile_count = tiles_x * tiles_y;
 
     // sampleScene settings
-    glm::vec3 origin(0.0);
+    //glm::vec3 origin(0.0);
 
     // competitionScene settings
-    /*
-     * glm::vec3 origin(-0.45, -0.21, 1.52); // z smaller value -> it goes forward
-     * float xTiltAngle = -0.75;
-     * float yTiltAngle = 0.4;
-     * glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
-     * rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
-     */
+    glm::vec3 origin(-0.45, -0.21, 1.52); // z smaller value -> it goes forward
+    float xTiltAngle = -0.75;
+    float yTiltAngle = 0.4;
+    glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+    rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+    //
 
     // topdown angle for competitionScene
     /*
@@ -590,7 +586,6 @@ int main(int argc, const char *argv[]) {
      * float yTiltAngle = 0.4;
      * glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), xTiltAngle, glm::vec3(1.0f, 0.0f, 0.0f));
      * rotationMatrix = glm::rotate(rotationMatrix, yTiltAngle, glm::vec3(0.0f, 1.0f, 0.0f));
-
      */
 
     // debug angle for competitionScene
@@ -615,7 +610,6 @@ int main(int argc, const char *argv[]) {
             cout << "Progress: " << ceil((float) tile / tile_count * 10000) / 100 << "%\r";
             cout.flush();
         }
-        // Compute the tile coordinates
         const int tile_j = tile / tiles_x;                             // the tile column number
         const int tile_i = tile - tile_j * tiles_x;                    // the tile row number
         const int tile_i_start = tile_i * tile_size;                   // the x coordinate of the tile
@@ -637,13 +631,12 @@ int main(int argc, const char *argv[]) {
                     float dz = 1;
 
                     // sampleScene settings
-                    glm::vec4 direction4(dx, dy, dz, 0.0f);
+                    //glm::vec4 direction4(dx, dy, dz, 0.0f);
 
                     // competitionScene settings
-                    /*
-                     * glm::vec4 direction4(dx, dy, -dz, 0.0f);
-                     * direction4 = rotationMatrix * direction4;
-                     */
+                    glm::vec4 direction4(dx, dy, -dz, 0.0f);
+                    direction4 = rotationMatrix * direction4;
+                    //
 
                     glm::vec3 direction = glm::normalize(glm::vec3(direction4));
                     Ray ray(origin, direction);
