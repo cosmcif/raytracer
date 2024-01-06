@@ -19,6 +19,7 @@ struct Material {
     float reflection = 0.0f;
     float refraction = 0.0f;
     float sigma = 1.0f;
+    // source: https://www.gemsociety.org/article/table-refractive-index-double-refraction-gems/
 
     float shininess = 0.0f;
 

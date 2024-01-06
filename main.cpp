@@ -119,6 +119,7 @@ glm::vec3 PhongModel(glm::vec3 point, glm::vec3 normal, glm::vec3 normalShading,
                 shiny = material.shininess;
             }
 
+            // FEAT: SPECULAR HIGHLIGHTS
             if (material.isAnisotropic) {
                 // https://en.wikipedia.org/wiki/Specular_highlight#Ward_anisotropic_distribution
 
@@ -263,16 +264,13 @@ void sampleScene() {
     orange.diffuse = glm::vec3(1.0f, 0.6f, 0.1f);
     orange.ambient = glm::vec3(0.01f, 0.03f, 0.03f);
     orange.specular = glm::vec3(0.03f);
-    //orange.shininess = 10.0;
     orange.isAnisotropic = true;
     orange.alpha_x = 1.0f;
     orange.alpha_y = 1.0f;
 
-
     Material orange_highlight;
     orange_highlight.diffuse = glm::vec3(1.0f, 0.6f, 0.1f);
     orange_highlight.ambient = glm::vec3(0.01f, 0.03f, 0.03f);
-    //orange_highlight.shininess = 10.0;
     orange_highlight.specular = glm::vec3(0.03f);
     orange_highlight.isAnisotropic = true;
     orange_highlight.alpha_x = 0.5f;
@@ -339,52 +337,30 @@ void sampleScene() {
 
     Material crystal;
     crystal.sigma = 2.4f;
-    // source: https://www.gemsociety.org/article/table-refractive-index-double-refraction-gems/
     crystal.refraction = 1.0f;
     crystal.reflection = 0.5f;
     crystal.ambient = glm::vec3(0.1f, 0.2f, 0.3f);
 
     objects.push_back(new MeshLoader("./meshes/bunny.obj",
                                      glm::vec3(0, -3, 9), true, glass));
-
     // plane in the front
     objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, -0.1f),
                                 glm::vec3(0.0f, 0.0f, 1.0f), true, blue_copper_specular));
     // plane in the back
     objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, 30.0f),
                                 glm::vec3(0.0f, 0.0f, -1.0f), true, orange));
-
     // plane on the left
     objects.push_back(new Plane(glm::vec3(-15.0f, 12.0f, 14.995f),
                                 glm::vec3(1.0f, 0.0f, 0.0f), true, blue_copper_specular));
     // plane on the right
     objects.push_back(new Plane(glm::vec3(15.0f, 12.0f, 14.995f),
                                 glm::vec3(-1.0f, 0.0f, 0.0f), true, blue_copper_specular));
-
     // plane on bottom
     objects.push_back(new Plane(glm::vec3(0.0f, -3.0f, 14.995f),
                                 glm::vec3(0.0f, 1.0f, 0.0f), true, blue_copper_specular));
-
     // plane on top
     objects.push_back(new Plane(glm::vec3(0.0f, 27.0f, 14.995f),
                                 glm::vec3(0.0f, -1.0f, 0.0f), true, blue_copper_specular));
-
-    /*auto *redSphere = new Sphere(terrain);
-    redSphere->setTransformation(glm::translate(glm::vec3(5, -2, 7)) *
-                                 glm::scale(glm::vec3(1)));
-    objects.push_back(redSphere);
-
-      auto *mirrorSphere = new Sphere(perla);
-    glm::mat4 mirrorMatrix = glm::translate(glm::vec3(4, 2, 14)) * glm::scale(glm::vec3(1.0));
-    mirrorSphere->setTransformation(mirrorMatrix);
-    objects.push_back(mirrorSphere);
-
-    auto *texturedSphere = new Sphere(ice);
-    glm::mat4 texturedMatrix = glm::translate(glm::vec3(-6, 4, 23)) * glm::scale(glm::vec3(7.0));
-    texturedSphere->setTransformation(texturedMatrix);
-    objects.push_back(texturedSphere);
-    */
-
 
     auto *sphere1 = new Sphere(img_texture);
     sphere1->setTransformation(glm::translate(glm::vec3(-8, -1, 10)) * glm::scale(glm::vec3(2.0)));
@@ -397,12 +373,6 @@ void sampleScene() {
     auto *sphere3 = new Sphere(perla);
     sphere3->setTransformation(glm::translate(glm::vec3(0, 2.5, 16.5)) * glm::scale(glm::vec3(1.5)));
     objects.push_back(sphere3);
-
-    /*
-    auto *sphere4 = new Sphere(mirror);
-    sphere4->setTransformation(glm::translate(glm::vec3(0, 5, 16)) * glm::scale(glm::vec3(1.5)));
-    objects.push_back(sphere4);*/
-
 
     auto *sphere5 = new Sphere(orange_highlight);
     sphere5->setTransformation(glm::translate(glm::vec3(8, -1, 10)) * glm::scale(glm::vec3(2.0)));
@@ -431,7 +401,6 @@ void sampleScene() {
     auto *sphereBig2 = new Sphere(water);
     sphereBig2->setTransformation(glm::translate(glm::vec3(5, 0, 14)) * glm::scale(glm::vec3(3.0)));
     objects.push_back(sphereBig2);
-
 
     lights.push_back(
             new Light(glm::vec3(0, 26, 5), glm::vec3(130.0))); // top light
@@ -490,7 +459,6 @@ void competitionScene() {
 
     Material crystal;
     crystal.sigma = 2.4f;
-    // source: https://www.gemsociety.org/article/table-refractive-index-double-refraction-gems/
     crystal.refraction = 1.0f;
     crystal.reflection = 0.5f;
     crystal.ambient = glm::vec3(0.1f, 0.2f, 0.3f);
