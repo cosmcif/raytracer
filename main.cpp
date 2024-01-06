@@ -265,6 +265,12 @@ void sampleScene() {
     orange_specular.specular = glm::vec3(0.33);
     orange_specular.shininess = 10.0;
 
+    Material orange_specular_highlight;
+    orange_specular_highlight.diffuse = glm::vec3(1.0f, 0.6f, 0.1f);
+    orange_specular_highlight.ambient = glm::vec3(0.01f, 0.03f, 0.03f);
+    orange_specular_highlight.shininess = 10.0;
+    orange_specular_highlight.isAnisotropic = true;
+
     Material blue_copper_specular;
     blue_copper_specular.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
     blue_copper_specular.diffuse = glm::vec3(0.2f, 0.8f, 0.8f);
@@ -278,6 +284,58 @@ void sampleScene() {
     img_texture.texture = &colorAt;
     img_texture.roughness = &roughnessAt;
     img_texture.occlusion = &ambientOcclusionAt;
+
+    Material perla;
+    perla.texture = &opal;
+    perla.shininess = 0.9f;
+    perla.refraction = 0.5f;
+    perla.reflection = 0.1f;
+    perla.sigma = 2.0f;
+
+    Material glass;
+    glass.ambient = glm::vec3(0.0f);
+    glass.diffuse = glm::vec3(0.0f);
+    glass.specular = glm::vec3(0.0f);
+    glass.shininess = 0.0;
+    glass.refraction = 1.0f;
+    glass.reflection = 1.0f;
+    glass.sigma = 2.0f;
+
+    Material mirror;
+    mirror.ambient = glm::vec3(0.0f);
+    mirror.diffuse = glm::vec3(0.0f);
+    mirror.specular = glm::vec3(0.0f);
+    mirror.shininess = 0.0;
+    mirror.reflection = 1.0f;
+
+    Material iceOpaque;
+    iceOpaque.texture = &snowTerrain;
+    iceOpaque.reflection = 0.02f;
+
+    Material normalmap;
+    normalmap.hasNormalMap = true;
+    normalmap.normalMap = &perlinNormal;
+    normalmap.refraction = 1.0f;
+    normalmap.reflection = 0.5f;
+    normalmap.sigma = 2.0f;
+
+    Material water;
+    water.hasNormalMap = true;
+    water.normalMap = &perlinWater;
+    water.refraction = 1.0f;
+    water.reflection = 0.5f;
+    water.sigma = 2.0f;
+    water.alpha_x = 0.7f;
+    water.alpha_y = 0.3f;
+    water.isAnisotropic = true;
+    water.shininess = 0.6f;
+
+    Material crystal;
+    crystal.sigma = 2.4f;
+    // source: https://www.gemsociety.org/article/table-refractive-index-double-refraction-gems/
+    crystal.refraction = 1.0f;
+    crystal.reflection = 0.5f;
+    crystal.ambient = glm::vec3(0.1f, 0.2f, 0.3f);
 
     //objects.push_back(new MeshLoader("./meshes/bunny.obj",
     //                                 glm::vec3(0, -3, 9), true, glass));
@@ -320,15 +378,57 @@ void sampleScene() {
     objects.push_back(texturedSphere);
     */
 
-    auto *glassSphere = new Sphere(img_texture);
-    glm::mat4 glassMatrix = glm::translate(glm::vec3(-3, 0, 10)) * glm::scale(glm::vec3(3.0));
-    glassSphere->setTransformation(glassMatrix);
-    objects.push_back(glassSphere);
+    auto *sphere1 = new Sphere(img_texture);
+    sphere1->setTransformation(glm::translate(glm::vec3(-8, -1, 10)) * glm::scale(glm::vec3(2.0)));
+    objects.push_back(sphere1);
+
+    auto *sphere2 = new Sphere(glass);
+    sphere2->setTransformation(glm::translate(glm::vec3(-4, -2, 8.5)) * glm::scale(glm::vec3(1.0)));
+    objects.push_back(sphere2);
+
+    auto *sphere3 = new Sphere(perla);
+    sphere3->setTransformation(glm::translate(glm::vec3(0, -1.5, 16)) * glm::scale(glm::vec3(1.5)));
+    objects.push_back(sphere3);
+
+    /*
+    auto *sphere4 = new Sphere(mirror);
+    sphere4->setTransformation(glm::translate(glm::vec3(0, 5, 16)) * glm::scale(glm::vec3(1.5)));
+    objects.push_back(sphere4);*/
+
+
+    auto *sphere5 = new Sphere(orange_specular_highlight);
+    sphere5->setTransformation(glm::translate(glm::vec3(8, -1, 10)) * glm::scale(glm::vec3(2.0)));
+    objects.push_back(sphere5);
+
+    auto *sphere6 = new Sphere(orange_specular);
+    sphere6->setTransformation(glm::translate(glm::vec3(4, -2, 8.5)) * glm::scale(glm::vec3(1.0)));
+    objects.push_back(sphere6);
+
+    auto *sphere7 = new Sphere(crystal);
+    sphere7->setTransformation(glm::translate(glm::vec3(1.5, -2.5, 5.5)) * glm::scale(glm::vec3(0.5)));
+    objects.push_back(sphere7);
+
+    auto *sphere8 = new Sphere(mirror);
+    sphere8->setTransformation(glm::translate(glm::vec3(-1.5, -2.5, 5.5)) * glm::scale(glm::vec3(0.5)));
+    objects.push_back(sphere8);
+
+    auto *sphere9 = new Sphere(iceOpaque);
+    sphere9->setTransformation(glm::translate(glm::vec3(0, -2.5, 5.5)) * glm::scale(glm::vec3(0.5)));
+    objects.push_back(sphere9);
+
+    auto *sphereBig1 = new Sphere(normalmap);
+    sphereBig1->setTransformation(glm::translate(glm::vec3(-5, 0, 14)) * glm::scale(glm::vec3(3.0)));
+    objects.push_back(sphereBig1);
+
+    auto *sphereBig2 = new Sphere(water);
+    sphereBig2->setTransformation(glm::translate(glm::vec3(5, 0, 14)) * glm::scale(glm::vec3(3.0)));
+    objects.push_back(sphereBig2);
+
 
     lights.push_back(
             new Light(glm::vec3(0, 26, 5), glm::vec3(130.0))); // top light
     lights.push_back(
-            new Light(glm::vec3(0, 1, 12), glm::vec3(15.0))); // floor light
+            new Light(glm::vec3(0, 1, 10), glm::vec3(15.0))); // floor light
     lights.push_back(new Light(glm::vec3(0, 5, 1), glm::vec3(45.0)));
 }
 
@@ -467,8 +567,8 @@ int main(int argc, const char *argv[]) {
 
     chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 
-    int width = /*320 1024 2048*/ 2048; // width of the image
-    int height = /*210 768 1536*/ 1536; // height of the image
+    int width = /*320 1024 2048*/ 1024; // width of the image
+    int height = /*210 768 1536*/ 768; // height of the image
     float fov = 90; // field of view
 
     /*
