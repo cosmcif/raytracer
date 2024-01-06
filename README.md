@@ -12,7 +12,8 @@ USI Computer Graphics rendering competition 2023 (we won :p). All results [here]
 
 <details>
  <summary><h1>Material sample scene<h1></summary>
-<img src="https://github.com/cosmcif/raytracer/assets/75504103/eacb9099-22ba-4b3d-a4fe-2c872659fa72">
+<img src="https://github.com/cosmcif/raytracer/assets/75504103/4b64640c-702c-42d0-a257-ac6accd2c3e5">
+
 </details>
 
 # Features implemented
