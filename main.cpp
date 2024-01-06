@@ -259,17 +259,24 @@ glm::vec3 toneMapping(glm::vec3 intensity) {
  */
 void sampleScene() {
 
-    Material orange_specular;
-    orange_specular.diffuse = glm::vec3(1.0f, 0.6f, 0.1f);
-    orange_specular.ambient = glm::vec3(0.01f, 0.03f, 0.03f);
-    orange_specular.specular = glm::vec3(0.33);
-    orange_specular.shininess = 10.0;
+    Material orange;
+    orange.diffuse = glm::vec3(1.0f, 0.6f, 0.1f);
+    orange.ambient = glm::vec3(0.01f, 0.03f, 0.03f);
+    orange.specular = glm::vec3(0.03f);
+    //orange.shininess = 10.0;
+    orange.isAnisotropic = true;
+    orange.alpha_x = 1.0f;
+    orange.alpha_y = 1.0f;
 
-    Material orange_specular_highlight;
-    orange_specular_highlight.diffuse = glm::vec3(1.0f, 0.6f, 0.1f);
-    orange_specular_highlight.ambient = glm::vec3(0.01f, 0.03f, 0.03f);
-    orange_specular_highlight.shininess = 10.0;
-    orange_specular_highlight.isAnisotropic = true;
+
+    Material orange_highlight;
+    orange_highlight.diffuse = glm::vec3(1.0f, 0.6f, 0.1f);
+    orange_highlight.ambient = glm::vec3(0.01f, 0.03f, 0.03f);
+    //orange_highlight.shininess = 10.0;
+    orange_highlight.specular = glm::vec3(0.03f);
+    orange_highlight.isAnisotropic = true;
+    orange_highlight.alpha_x = 0.5f;
+    orange_highlight.alpha_y = 0.2f;
 
     Material blue_copper_specular;
     blue_copper_specular.ambient = glm::vec3(0.07f, 0.07f, 0.1f);
@@ -337,15 +344,15 @@ void sampleScene() {
     crystal.reflection = 0.5f;
     crystal.ambient = glm::vec3(0.1f, 0.2f, 0.3f);
 
-    //objects.push_back(new MeshLoader("./meshes/bunny.obj",
-    //                                 glm::vec3(0, -3, 9), true, glass));
+    objects.push_back(new MeshLoader("./meshes/bunny.obj",
+                                     glm::vec3(0, -3, 9), true, glass));
 
     // plane in the front
     objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, -0.1f),
                                 glm::vec3(0.0f, 0.0f, 1.0f), true, blue_copper_specular));
     // plane in the back
     objects.push_back(new Plane(glm::vec3(0.0f, 12.0f, 30.0f),
-                                glm::vec3(0.0f, 0.0f, -1.0f), true, orange_specular));
+                                glm::vec3(0.0f, 0.0f, -1.0f), true, orange));
 
     // plane on the left
     objects.push_back(new Plane(glm::vec3(-15.0f, 12.0f, 14.995f),
@@ -378,6 +385,7 @@ void sampleScene() {
     objects.push_back(texturedSphere);
     */
 
+
     auto *sphere1 = new Sphere(img_texture);
     sphere1->setTransformation(glm::translate(glm::vec3(-8, -1, 10)) * glm::scale(glm::vec3(2.0)));
     objects.push_back(sphere1);
@@ -387,7 +395,7 @@ void sampleScene() {
     objects.push_back(sphere2);
 
     auto *sphere3 = new Sphere(perla);
-    sphere3->setTransformation(glm::translate(glm::vec3(0, -1.5, 16)) * glm::scale(glm::vec3(1.5)));
+    sphere3->setTransformation(glm::translate(glm::vec3(0, 2.5, 16.5)) * glm::scale(glm::vec3(1.5)));
     objects.push_back(sphere3);
 
     /*
@@ -396,11 +404,11 @@ void sampleScene() {
     objects.push_back(sphere4);*/
 
 
-    auto *sphere5 = new Sphere(orange_specular_highlight);
+    auto *sphere5 = new Sphere(orange_highlight);
     sphere5->setTransformation(glm::translate(glm::vec3(8, -1, 10)) * glm::scale(glm::vec3(2.0)));
     objects.push_back(sphere5);
 
-    auto *sphere6 = new Sphere(orange_specular);
+    auto *sphere6 = new Sphere(orange);
     sphere6->setTransformation(glm::translate(glm::vec3(4, -2, 8.5)) * glm::scale(glm::vec3(1.0)));
     objects.push_back(sphere6);
 
