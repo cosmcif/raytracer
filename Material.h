@@ -30,8 +30,8 @@ struct Material {
 
     // FEAT: SPECULAR HIGHLIGHTS
     bool isAnisotropic = false;
-    float alpha_x = 0.05f;
-    float alpha_y = 0.16f;
+    float alpha_x = 0.5f;
+    float alpha_y = 0.2f;
     // https://cseweb.ucsd.edu/~ravir/6998/papers/p265-ward.pdf
 
     // FEAT: IMAGE TEXTURES
